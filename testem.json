@@ -1,0 +1,14 @@
+{
+  "framework": "jasmine2",
+  "src_files": [
+    "bower_components/rxjs/dist/rx.all.compat.js",
+    "dist/rx-socket-subject.js",
+    "test/RxSocketSubject/**/*.js"
+  ],
+  "launch_in_dev": [
+  	"PhantomJS"
+  ],
+  "launch_in_ci": [
+    "PhantomJS"
+  ]
+}

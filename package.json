@@ -1,0 +1,33 @@
+{
+  "name": "RxSocketSubject",
+  "version": "0.0.0",
+  "description": "RxSocketSubject ===============",
+  "main": "index.js",
+  "scripts": {
+    "test": "testem ci -R dot",
+    "build": "ember build",
+    "prepublish": "export EMBER_ENV=production && ember build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blesh/RxSocketSubject.git"
+  },
+  "keywords": [
+    "RxJS",
+    "WebSocket"
+  ],
+  "author": "Ben Lesh <ben@benlesh.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blesh/RxSocketSubject/issues"
+  },
+  "homepage": "https://github.com/blesh/RxSocketSubject",
+  "devDependencies": {
+    "ember-cli": "^0.1.4",
+    "es6-module-transpiler-amd-formatter": "^0.2.4",
+    "broccoli-compile-modules": "^1.1.0",
+    "broccoli-closure-compiler": "^1.0.0",
+    "broccoli-file-mover": "^0.4.2",
+    "broccoli-merge-trees": "^0.2.1"
+  }
+}

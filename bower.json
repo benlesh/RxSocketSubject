@@ -1,0 +1,29 @@
+{
+  "name": "RxSocketSubject",
+  "version": "0.0.0",
+  "homepage": "https://github.com/blesh/RxSocketSubject",
+  "authors": [
+    "Ben Lesh <ben@benlesh.com>"
+  ],
+  "description": "More advance RxJS WebSocket wrapper",
+  "main": "dist/rx-socket-subject",
+  "moduleType": [
+    "amd",
+    "es6"
+  ],
+  "keywords": [
+    "RxJS",
+    "WebSocket"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "rxjs": "~2.3.22"
+  }
+}
