@@ -5,7 +5,15 @@ RxSocketSubject
 
 A more advanced web socket wrapper for RxJS
 
-### Goals
+## Install
+
+With bower:
+
+```sh
+bower install -S rx-socket-subject
+```
+
+## Goals
 
 The goals of this project is to produce an observable WebSocket implementation that meets a set of common
 needs for projects I'm currently working on. RxJS-DOM has a fine WebSocket implementation, which I modelled the initial
