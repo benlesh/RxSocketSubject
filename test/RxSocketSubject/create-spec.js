@@ -226,6 +226,52 @@ describe('RxSocketSubject.create()', function(){
 
 				expect(socket.close).toHaveBeenCalledWith(RxSocketSubject.CLOSE_GENERIC, 'boop.');
 			});
+
+
+		  it('should call socket.close(e.code, e.message) when called with a ClientInitiatedError', function(){
+				var socket;
+
+				RxSocketSubject.config.WebSocket = function MockSocket() {
+					socket = this;
+					socket.close = jasmine.createSpy('socket.close');
+				};
+
+				var errorObserver = Rx.Observer.create(function(err) {
+					expect(err.code).toBe(4002);
+					expect(err.message).toBe('boop.');
+				});
+
+				var socketSubject = RxSocketSubject.create('', undefined, errorObserver, undefined);
+
+				disposable = socketSubject.forEach(function(){});
+
+				socketSubject.onError(new RxSocketSubject.ClientInitiatedError('boop.', 4002));
+
+				expect(socket.close).toHaveBeenCalledWith(4002, 'boop.');
+			});
+
+
+		  it('should call socket.close(4003, "shazbot") when called with a { code: 4003, message: "shazbot" }', function(){
+				var socket;
+
+				RxSocketSubject.config.WebSocket = function MockSocket() {
+					socket = this;
+					socket.close = jasmine.createSpy('socket.close');
+				};
+
+				var errorObserver = Rx.Observer.create(function(err) {
+					expect(err.code).toBe(4003);
+					expect(err.message).toBe('shazbot');
+				});
+
+				var socketSubject = RxSocketSubject.create('', undefined, errorObserver, undefined);
+
+				disposable = socketSubject.forEach(function(){});
+
+				socketSubject.onError(new RxSocketSubject.ClientInitiatedError('shazbot', 4003));
+
+				expect(socket.close).toHaveBeenCalledWith(4003, 'shazbot');
+			});
 		});
 
 		describe('onCompleted', function() {
