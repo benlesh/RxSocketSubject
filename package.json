@@ -1,6 +1,6 @@
 {
   "name": "RxSocketSubject",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "RxSocketSubject ===============",
   "main": "index.js",
   "scripts": {
