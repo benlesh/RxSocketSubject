@@ -63,7 +63,7 @@ define(
                         socket.send(msg);
                     }
                 };
-            }).retry();
+            }).retry().publish().refCount();
 
             var observer = Rx.Observer.create(function(msg) {
                 if(socket.readyState === socket.OPEN) {
