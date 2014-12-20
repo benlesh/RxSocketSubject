@@ -28,6 +28,7 @@
     "broccoli-compile-modules": "^1.1.0",
     "broccoli-closure-compiler": "^1.0.0",
     "broccoli-file-mover": "^0.4.2",
-    "broccoli-merge-trees": "^0.2.1"
+    "broccoli-merge-trees": "^0.2.1",
+    "testem": "^0.6.24"
   }
 }
