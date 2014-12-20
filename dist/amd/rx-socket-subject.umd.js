@@ -21,7 +21,7 @@ define(
         create: create,
         config: config,
         CLOSE_GENERIC: CLOSE_GENERIC,
-        ClientInitiatedError: ClientInitiatedError,
+        ClientInitiatedError: ClientInitiatedError
     };
 
     /* global define:true module:true window: true */

@@ -98,7 +98,7 @@
         create: $$RxSocketSubject$create$$create,
         config: $$RxSocketSubject$config$$default,
         CLOSE_GENERIC: $$RxSocketSubject$constants$$CLOSE_GENERIC,
-        ClientInitiatedError: $$RxSocketSubject$client$initiated$error$$default,
+        ClientInitiatedError: $$RxSocketSubject$client$initiated$error$$default
     };
 
     /* global define:true module:true window: true */
