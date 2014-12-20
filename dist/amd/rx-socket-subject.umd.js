@@ -25,6 +25,10 @@ define(
     };
 
     /* global define:true module:true window: true */
+
+    /**
+        @namespace RxSocketSubject
+    */
     if (typeof define === 'function' && define['amd']) {
       define(function() { return RxSocketSubject; });
     } else if (typeof module !== 'undefined' && module['exports']) {

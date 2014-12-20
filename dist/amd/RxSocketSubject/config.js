@@ -6,6 +6,12 @@ define("RxSocketSubject/config", ["exports"], function(__exports__) {
     }
 
     __es6_export__("default", {
+        /**
+            The WebSocket constructor to use to create the underlying socket
+            @property WebSocket
+            @type {WebSocket}
+            @default window.WebSocket
+        */
         WebSocket: window.WebSocket
     });
 });

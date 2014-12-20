@@ -2,15 +2,58 @@
     "use strict";
 
     var $$RxSocketSubject$config$$default = {
+        /**
+            The WebSocket constructor to use to create the underlying socket
+            @property WebSocket
+            @type {WebSocket}
+            @default window.WebSocket
+        */
         WebSocket: window.WebSocket
     };
 
     var $$RxSocketSubject$constants$$CLOSE_GENERIC = 1008;
 
+    /**
+        An error class for triggering errors with a custom reason
+        and code.
+
+        ### Example
+
+                    var ClientInitiatedError = RxSocketSubject.ClientInitiatedError;
+
+                    socket.onError(new ClientInitiatedError('bad things', 4001));
+
+        @class ClientInitiatedError
+        @constructor
+        @param message {String} the message (aka reason)
+        @param code {Number} [optional] the custom error code. Defaults to `1008`
+    */
     function $$RxSocketSubject$client$initiated$error$$ClientInitiatedError(message, code) {
         this.message = message;
-        this.code = code || $$RxSocketSubject$constants$$CLOSE_GENERIC;
+        if(code) {
+            this.code = code;
+        }
     }
+
+    $$RxSocketSubject$client$initiated$error$$ClientInitiatedError.prototype = {
+        constructor: $$RxSocketSubject$client$initiated$error$$ClientInitiatedError,
+
+        /**
+            The message (aka reason)
+            @property message
+            @type {String}
+            @default ''
+        */
+        message: '',
+
+        /**
+            The status code
+            @property code
+            @type {Number}
+            @default 1008
+        */
+        code: $$RxSocketSubject$constants$$CLOSE_GENERIC
+    };
 
     var $$RxSocketSubject$client$initiated$error$$default = $$RxSocketSubject$client$initiated$error$$ClientInitiatedError;
 
@@ -102,6 +145,10 @@
     };
 
     /* global define:true module:true window: true */
+
+    /**
+        @namespace RxSocketSubject
+    */
     if (typeof define === 'function' && define['amd']) {
       define(function() { return rx$socket$subject$umd$$RxSocketSubject; });
     } else if (typeof module !== 'undefined' && module['exports']) {
