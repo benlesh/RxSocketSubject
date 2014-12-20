@@ -10,9 +10,18 @@ define(
 
     var create;
     create = rx$socket$subject$$["create"];
+    var config;
+    config = rx$socket$subject$$["config"];
+    var CLOSE_GENERIC;
+    CLOSE_GENERIC = rx$socket$subject$$["CLOSE_GENERIC"];
+    var ClientInitiatedError;
+    ClientInitiatedError = rx$socket$subject$$["ClientInitiatedError"];
 
     var RxSocketSubject = {
-        create: create
+        create: create,
+        config: config,
+        CLOSE_GENERIC: CLOSE_GENERIC,
+        ClientInitiatedError: ClientInitiatedError,
     };
 
     /* global define:true module:true window: true */
