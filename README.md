@@ -17,3 +17,4 @@ work on this implementation off of. However, I need something that also does the
 - Will send proper close messages with WebSocket close codes to the server when `onError` is called.
 - Will send a close command to the server when `onCompleted` is called.
 - Will always force a single instance of a socket regardless of the number of subscriptions.
+- Will buffer messages fed to it via `onNext` if the underlying socket isn't open, send them all when it does open.
