@@ -292,6 +292,43 @@ describe('RxSocketSubject.create()', function(){
 				expect(socket.close).toHaveBeenCalledWith();
 			});
 		});
+
+		describe('when subscribe or forEach is called', function(){
+			it('should create a socket', function(){
+				var socketsCreated = 0;
+
+				RxSocketSubject.config.WebSocket = function MockSocket() {
+					socketsCreated++;
+				};
+
+				var socketSubject = RxSocketSubject.create('');
+
+				expect(socketsCreated).toBe(0);
+
+				disposable = socketSubject.forEach(function(){});
+
+				expect(socketsCreated).toBe(1);
+			});
+
+			describe('more than once', function() {
+				it('should only create one socket', function(){
+					var socketsCreated = 0;
+
+					RxSocketSubject.config.WebSocket = function MockSocket() {
+						socketsCreated++;
+					};
+
+					var socketSubject = RxSocketSubject.create('');
+
+					disposable = new Rx.CompositeDisposable();
+
+					disposable.add(socketSubject.forEach(function(){}));
+					disposable.add(socketSubject.forEach(function(){}));
+
+					expect(socketsCreated).toBe(1);
+				});
+			});
+		});
 	});
 
 
