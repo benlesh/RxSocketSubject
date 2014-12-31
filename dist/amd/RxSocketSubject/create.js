@@ -63,6 +63,10 @@ define(
                         socket.send(msg);
                     }
                 };
+
+                return function() {
+                    socket.close();
+                };
             }).retry().publish().refCount();
 
             var observer = Rx.Observer.create(function(msg) {

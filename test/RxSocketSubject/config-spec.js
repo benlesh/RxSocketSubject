@@ -4,7 +4,9 @@ describe('RxSocketSubject.config.WebSocket', function(){
 	});
 
 	it('should allow mocking of WebSocket ctor', function(){
-		RxSocketSubject.config.WebSocket = jasmine.createSpy('MockWebSocket');
+		RxSocketSubject.config.WebSocket = jasmine.createSpy('MockWebSocket').and.returnValue({
+			close: function() {}
+		});
 		var d = RxSocketSubject.create('test').forEach();
 		expect(RxSocketSubject.config.WebSocket).toHaveBeenCalledWith('test');
 		d.dispose();

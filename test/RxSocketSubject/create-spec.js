@@ -1,3 +1,4 @@
+
 describe('RxSocketSubject.create()', function(){
 	var disposable;
 
@@ -15,6 +16,7 @@ describe('RxSocketSubject.create()', function(){
 
 		RxSocketSubject.config.WebSocket = function MockSocket() {
 			socket = this;
+			this.close = function(){};
 			setTimeout(function(){
 				socket.onopen('opened');
 			}, 0);
@@ -36,6 +38,7 @@ describe('RxSocketSubject.create()', function(){
 
 		RxSocketSubject.config.WebSocket = function MockSocket() {
 			socket = this;
+			this.close = function(){};
 			setTimeout(function(){
 				socket.onerror('oops');
 			}, 0);
@@ -57,6 +60,7 @@ describe('RxSocketSubject.create()', function(){
 
 		RxSocketSubject.config.WebSocket = function MockSocket() {
 			socket = this;
+			this.close = function(){};
 			setTimeout(function(){
 				socket.onclose('closed');
 			}, 0);
@@ -72,9 +76,31 @@ describe('RxSocketSubject.create()', function(){
 		disposable = socketSubject.forEach(function(){});
 	});
 
-	describe('the returned subject', function(){
+	describe('the returned subject', function() {
+		it('should close the socket when all subscribed observables are complete', function(){
+			var socket;
+			var closeSpy = jasmine.createSpy('socket.close');
+
+			RxSocketSubject.config.WebSocket = function MockSocket() {
+				this.readyState = 1; //OPEN
+				this.OPEN = 1;
+				this.close = closeSpy;
+				socket = this;
+			};
+
+			var socketSubject = RxSocketSubject.create('');
+			var disp1 = socketSubject.forEach(function(){});
+			var disp2 = socketSubject.forEach(function(){});
+			disp1.dispose();
+			expect(socket.close).not.toHaveBeenCalled();
+			disp2.dispose();
+			expect(socket.close).toHaveBeenCalled();
+		});
+
 		it('should create a WebSocket with the passed endpoint on subcription', function(){
-			RxSocketSubject.config.WebSocket = jasmine.createSpy('MockSocket');
+			RxSocketSubject.config.WebSocket = jasmine.createSpy('MockSocket').and.returnValue({
+				close: function(){}
+			});
 			var socketSubject = RxSocketSubject.create('ws://test.com');
 			disposable = socketSubject.forEach(function(x) {});
 			expect(RxSocketSubject.config.WebSocket).toHaveBeenCalledWith('ws://test.com');
@@ -84,6 +110,7 @@ describe('RxSocketSubject.create()', function(){
 			var socket;
 			RxSocketSubject.config.WebSocket = function MockSocket() {
 				socket = this;
+				this.close = function(){};
 			};
 
 			var socketSubject = RxSocketSubject.create('ws://test.com');
@@ -109,6 +136,7 @@ describe('RxSocketSubject.create()', function(){
 			var socket;
 			RxSocketSubject.config.WebSocket = function MockSocket() {
 				socket = this;
+				this.close = function(){};
 			};
 
 			var errorObserver = Rx.Observer.create(function(e) {
@@ -139,6 +167,7 @@ describe('RxSocketSubject.create()', function(){
 				expect(typeof endpoint).toBe('string');
 				tries++;
 				socket = this;
+				this.close = function(){};
 
 				if(endpoint !== 'ws://good') {
 					// simulate immediate connection error
@@ -164,6 +193,7 @@ describe('RxSocketSubject.create()', function(){
 					this.readyState = 1; //OPEN
 					this.OPEN = 1;
 					this.send = sendSpy;
+					this.close = function(){};
 					socket = this;
 				};
 
@@ -185,6 +215,7 @@ describe('RxSocketSubject.create()', function(){
 					this.send = function() {
 						sent.push([].slice.call(arguments));
 					};
+					this.close = function(){};
 					socket = this;
 				};
 
@@ -210,6 +241,7 @@ describe('RxSocketSubject.create()', function(){
 
 				RxSocketSubject.config.WebSocket = function MockSocket() {
 					socket = this;
+					this.close = function(){};
 					socket.close = jasmine.createSpy('socket.close');
 				};
 
@@ -233,6 +265,7 @@ describe('RxSocketSubject.create()', function(){
 
 				RxSocketSubject.config.WebSocket = function MockSocket() {
 					socket = this;
+					this.close = function(){};
 					socket.close = jasmine.createSpy('socket.close');
 				};
 
@@ -256,6 +289,7 @@ describe('RxSocketSubject.create()', function(){
 
 				RxSocketSubject.config.WebSocket = function MockSocket() {
 					socket = this;
+					this.close = function(){};
 					socket.close = jasmine.createSpy('socket.close');
 				};
 
@@ -280,6 +314,7 @@ describe('RxSocketSubject.create()', function(){
 
 				RxSocketSubject.config.WebSocket = function MockSocket() {
 					socket = this;
+					this.close = function(){};
 					socket.close = jasmine.createSpy('socket.close');
 				};
 
@@ -299,6 +334,7 @@ describe('RxSocketSubject.create()', function(){
 
 				RxSocketSubject.config.WebSocket = function MockSocket() {
 					socketsCreated++;
+					this.close = function(){};
 				};
 
 				var socketSubject = RxSocketSubject.create('');
@@ -316,6 +352,7 @@ describe('RxSocketSubject.create()', function(){
 
 					RxSocketSubject.config.WebSocket = function MockSocket() {
 						socketsCreated++;
+						this.close = function(){};
 					};
 
 					var socketSubject = RxSocketSubject.create('');
