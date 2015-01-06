@@ -160,11 +160,7 @@
 
             var socket = $$from$web$socket$fill$$fromWebSocket(endpoint, null, $$RxSocketSubject$create$$Observer.create(function(e) {
                 socketOpen(e);
-            }), $$RxSocketSubject$create$$Observer.create(function(){
-                if(closingObserver) {
-                    closingObserver.onNext();
-                }
-            }));
+            }), closingObserver);
 
             var disposable = new Rx.CompositeDisposable(
           socket.subscribe(function(e) {

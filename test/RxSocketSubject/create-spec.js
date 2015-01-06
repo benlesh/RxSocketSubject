@@ -128,6 +128,23 @@ describe('RxSocketSubject.create()', function(){
 			}
 		});
 
+		it('should accept a closingObserver that emits when the socket is about to close', function(done) {
+			var socket;
+
+			var closingObserver = Rx.Observer.create(function() {
+				expect(socket.close).not.toHaveBeenCalled();
+				done();
+			});
+
+			var socketSubject = RxSocketSubject.create('', null, null, closingObserver);
+
+			var disp = socketSubject.forEach(function(){});
+
+			socket = sockets[0];
+
+			disp.dispose();
+		});
+
 		describe('onNext', function() {	
 			it('should buffer messages if no socket exists yet', function(){var socket;
 				var socketSubject = RxSocketSubject.create('');
