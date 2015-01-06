@@ -92,7 +92,7 @@ define(
               return function(){
                 socketClosed();
                 disposable.dispose();
-              }
+              };
             }).retry().publish().refCount();
 
             var socketSubject = Subject.create(observer, observable);
@@ -107,7 +107,6 @@ define(
 
             return socketSubject;
         }
-
         __es6_export__("create", create);
     }
 );

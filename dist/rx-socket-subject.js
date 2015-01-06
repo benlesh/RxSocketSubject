@@ -185,7 +185,7 @@
           return function(){
             socketClosed();
             disposable.dispose();
-          }
+          };
         }).retry().publish().refCount();
 
         var socketSubject = $$RxSocketSubject$create$$Subject.create(observer, observable);
