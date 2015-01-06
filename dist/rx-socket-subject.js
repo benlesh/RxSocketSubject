@@ -1,16 +1,5 @@
 (function() {
     "use strict";
-
-    var $$RxSocketSubject$config$$default = {
-        /**
-            The WebSocket constructor to use to create the underlying socket
-            @property WebSocket
-            @type {WebSocket}
-            @default window.WebSocket
-        */
-        WebSocket: window.WebSocket
-    };
-
     var $$RxSocketSubject$constants$$CLOSE_GENERIC = 1008;
 
     /**
@@ -56,94 +45,168 @@
     };
 
     var $$RxSocketSubject$client$initiated$error$$default = $$RxSocketSubject$client$initiated$error$$ClientInitiatedError;
+    function $$from$web$socket$fill$$fromWebSocket(url, protocol, openObserver, closingObserver) {
+        if (!window.WebSocket) { throw new TypeError('WebSocket not implemented in your runtime.'); }
+
+        var WebSocket = window.WebSocket;
+
+        var socket;
+
+        var socketClose = function(code, reason) {
+          if(socket) {
+            if(closingObserver) {
+              closingObserver.onNext();
+              closingObserver.onCompleted();
+            }
+            if(!code) {
+              socket.close();
+            } else {
+              socket.close(code, reason);
+            }
+          }
+        };
+
+        var observable = new Rx.AnonymousObservable(function (obs) {
+          socket = protocol ? new WebSocket(url, protocol) : new WebSocket(url);
+
+          var openHandler = function(e) {
+            openObserver.onNext(e);
+            openObserver.onCompleted();
+            socket.removeEventListener('open', openHandler, false);
+          };
+          var messageHandler = function(e) { obs.onNext(e); };
+          var errHandler = function(err) { obs.onError(err); };
+          var closeHandler = function() { obs.onCompleted(); };
+
+          openObserver && socket.addEventListener('open', openHandler, false);
+          socket.addEventListener('message', messageHandler, false);
+          socket.addEventListener('error', errHandler, false);
+          socket.addEventListener('close', closeHandler, false);
+
+          return function () {
+            socketClose();
+
+            socket.removeEventListener('message', messageHandler, false);
+            socket.removeEventListener('error', errHandler, false);
+            socket.removeEventListener('close', closeHandler, false);
+          };
+        });
+
+        var observer = Rx.Observer.create(function (data) {
+          socket.readyState === WebSocket.OPEN && socket.send(data);
+        },
+        function(e) {
+          var reason = 'unknown reason';
+          var code = 1008; //generic error code
+          if(typeof e === 'string') {
+            reason = e;
+          }
+          else if(typeof e === 'object') {
+            reason = e.reason || e.message;
+            code = e.code || code;
+          }
+          socketClose(code, reason);
+        },
+        socketClose);
+
+        return Rx.Subject.create(observer, observable);
+      }
 
     var $$RxSocketSubject$create$$Subject = Rx.Subject;
     var $$RxSocketSubject$create$$Observable = Rx.Observable;
     var $$RxSocketSubject$create$$Observer = Rx.Observer;
 
 
-    function $$RxSocketSubject$create$$create(endpoints, openObserver, errorObserver, closeObserver) {
-        var socket;
-        var outgoingQueue = [];
-        var endpointIndex = 0;
+    function $$RxSocketSubject$create$$create(endpoints, openObserver, errorObserver, closingObserver, closedObserver) {
+        var observer = new $$RxSocketSubject$create$$Subject();
+        var toSocket = new $$RxSocketSubject$create$$Subject();
+        var msgBuffer = [];
+        var isOpen = false;
 
-        endpoints = Array.isArray(endpoints) ? endpoints : [endpoints];
+        var socketOpen = function(e) {
+            isOpen = true;
 
-        var observable = Rx.Observable.create(function(obs) {
-            var endpoint = endpoints[endpointIndex++ % endpoints.length];
+            if(openObserver) {
+                openObserver.onNext(e);
+            }
 
-            socket = new $$RxSocketSubject$config$$default.WebSocket(endpoint);
+            while(msgBuffer.length > 0) {
+                var msg = msgBuffer.shift();
+                toSocket.onNext(msg);
+            }
+        };
 
-            socket.onmessage = function(e) {
-                obs.onNext(e);
-            };
+        var socketClosed = function() {
+            isOpen = false;
+        };
 
-            socket.onclose = function(e){
-                if(closeObserver) {
-                    closeObserver.onNext(e);
-                }
-                obs.onCompleted();
-            };
-
-            socket.onerror = function(e){
-                if(errorObserver) {
-                    errorObserver.onNext(e);
-                }
-                obs.onError(e);
-            };
-
-            socket.onopen = function(e) {
-                if(openObserver) {
-                    openObserver.onNext(e);
-                }
-                while(outgoingQueue.length) {
-                    var msg = outgoingQueue.shift();
-                    socket.send(msg);
-                }
-            };
-
-            return function() {
-                socket.close();
-            };
-        }).retry().publish().refCount();
-
-        var observer = Rx.Observer.create(function(msg) {
-            if(socket.readyState === socket.OPEN) {
-                socket.send(msg);
+      // subscribe to outward facing observer
+      // and buffer messages if necessary
+      var subjectDisposable = observer.subscribe(function(msg) {
+            if(isOpen) {
+                toSocket.onNext(msg);
             } else {
-                outgoingQueue.push(msg);
+                msgBuffer.push(msg);
             }
         }, function(err) {
-            if(socket) {
-                var reason = 'unknown';
-                var code = $$RxSocketSubject$constants$$CLOSE_GENERIC;
-                if(typeof err === 'object') {
-                    reason = err.message;
-                    if(+err.code === +err.code) {
-                        code = +err.code;
-                    }
-                } else if(typeof err === 'string') {
-                    reason = err;
-                } 
-
-                socket.onerror(new ClientInitiatedError(reason, code));
-                socket.close(code, reason);
-            }
+            toSocket.onError(err);
         }, function() {
-            socket.close();
+            toSocket.onCompleted();
         });
 
-        function ClientInitiatedError(msg, code) {
-            this.message = msg;
-            this.code = code || $$RxSocketSubject$constants$$CLOSE_GENERIC;
-        }
+        var i = 0;
+        var observable = $$RxSocketSubject$create$$Observable.create(function(o) {
+            var endpoint = Array.isArray(endpoints) ? endpoints[i++ % endpoints.length] : endpoints;
 
-        return $$RxSocketSubject$create$$Subject.create(observer, observable);
+            var socket = $$from$web$socket$fill$$fromWebSocket(endpoint, null, $$RxSocketSubject$create$$Observer.create(function(e) {
+                socketOpen(e);
+            }), $$RxSocketSubject$create$$Observer.create(function(){
+                if(closingObserver) {
+                    closingObserver.onNext();
+                }
+            }));
+
+            var disposable = new Rx.CompositeDisposable(
+          socket.subscribe(function(e) {
+                    o.onNext(e);
+                }, function(err) {
+                    if(errorObserver) {
+                        errorObserver.onNext(err);
+                    }
+                    socketClosed();
+                    o.onError(err);
+                }, function() {
+                    if(closedObserver) {
+                        closedObserver.onNext();
+                    }
+                    socketClosed();
+                    o.onCompleted();
+                }),
+
+                toSocket.subscribe(socket)
+          );
+
+          return function(){
+            socketClosed();
+            disposable.dispose();
+          }
+        }).retry().publish().refCount();
+
+        var socketSubject = $$RxSocketSubject$create$$Subject.create(observer, observable);
+
+        var dispose = socketSubject.dispose;
+
+        socketSubject.dispose = function() {
+            toSocket.dispose();
+            subjectDisposable.dispose();
+            return dispose();
+        };
+
+        return socketSubject;
     }
 
     var rx$socket$subject$umd$$RxSocketSubject = {
         create: $$RxSocketSubject$create$$create,
-        config: $$RxSocketSubject$config$$default,
         CLOSE_GENERIC: $$RxSocketSubject$constants$$CLOSE_GENERIC,
         ClientInitiatedError: $$RxSocketSubject$client$initiated$error$$default
     };

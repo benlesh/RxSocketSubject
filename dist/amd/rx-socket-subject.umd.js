@@ -10,8 +10,6 @@ define(
 
     var create;
     create = rx$socket$subject$$["create"];
-    var config;
-    config = rx$socket$subject$$["config"];
     var CLOSE_GENERIC;
     CLOSE_GENERIC = rx$socket$subject$$["CLOSE_GENERIC"];
     var ClientInitiatedError;
@@ -19,7 +17,6 @@ define(
 
     var RxSocketSubject = {
         create: create,
-        config: config,
         CLOSE_GENERIC: CLOSE_GENERIC,
         ClientInitiatedError: ClientInitiatedError
     };

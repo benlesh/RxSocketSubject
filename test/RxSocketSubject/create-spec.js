@@ -1,6 +1,24 @@
+MockSocket.OPEN = 1;
 
 describe('RxSocketSubject.create()', function(){
+	var originalWebSocket;
 	var disposable;
+
+	beforeEach(function(){
+		originalWebSocket = window.WebSocket;
+		window.WebSocket = MockSocket;
+	});
+
+	afterEach(function(){
+		if(disposable) {
+			disposable.dispose();
+		}
+		while(sockets.length) {
+			sockets.shift();
+		}
+		window.WebSocket = originalWebSocket;
+	});
+
 
 	it('should exist', function(){
 		expect(typeof RxSocketSubject.create).toBe('function');
@@ -12,107 +30,69 @@ describe('RxSocketSubject.create()', function(){
 	});
 
 	it('should accept an openObserver argument', function(done){
-		var socket;
-
-		RxSocketSubject.config.WebSocket = function MockSocket() {
-			socket = this;
-			this.close = function(){};
-			setTimeout(function(){
-				socket.onopen('opened');
-			}, 0);
-		};
-
 		var openObserver = Rx.Observer.create(function(e) {
-			expect(e).toBe('opened');
 			done();
 		});
 
 		var socketSubject = RxSocketSubject.create('', openObserver);
 
 		disposable = socketSubject.forEach(function(){});
+
+		sendOpen();
 	});
 
 
 	it('should accept an errorObserver argument', function(done){
-		var socket;
-
-		RxSocketSubject.config.WebSocket = function MockSocket() {
-			socket = this;
-			this.close = function(){};
-			setTimeout(function(){
-				socket.onerror('oops');
-			}, 0);
-		};
+		var called = false;
 
 		var errorObserver = Rx.Observer.create(function(e) {
-			expect(e).toBe('oops');
 			done();
 		});
 
 		var socketSubject = RxSocketSubject.create('', undefined, errorObserver);
 
 		disposable = socketSubject.forEach(function(){});
+
+		sendError('err');
 	});
 
 
 	it('should accept a closeObserver argument', function(done) {
-		var socket;
-
-		RxSocketSubject.config.WebSocket = function MockSocket() {
-			socket = this;
-			this.close = function(){};
-			setTimeout(function(){
-				socket.onclose('closed');
-			}, 0);
-		};
-
-		var closeObserver = Rx.Observer.create(function(e) {
-			expect(e).toBe('closed');
+		var closedObserver = Rx.Observer.create(function() {
 			done();
 		});
 
-		var socketSubject = RxSocketSubject.create('', undefined, undefined, closeObserver);
+		var socketSubject = RxSocketSubject.create('', undefined, undefined, undefined, closedObserver);
 
 		disposable = socketSubject.forEach(function(){});
+
+		sendClose();
 	});
 
 	describe('the returned subject', function() {
-		it('should close the socket when all subscribed observables are complete', function(){
-			var socket;
-			var closeSpy = jasmine.createSpy('socket.close');
-
-			RxSocketSubject.config.WebSocket = function MockSocket() {
-				this.readyState = 1; //OPEN
-				this.OPEN = 1;
-				this.close = closeSpy;
-				socket = this;
-			};
-
+		it('should create one socket, and close the socket when all subscribed observables are complete', function(){
 			var socketSubject = RxSocketSubject.create('');
 			var disp1 = socketSubject.forEach(function(){});
 			var disp2 = socketSubject.forEach(function(){});
+
+			expect(sockets.length).toBe(1);
+
+			var socket = sockets[0];
+
 			disp1.dispose();
 			expect(socket.close).not.toHaveBeenCalled();
+
 			disp2.dispose();
 			expect(socket.close).toHaveBeenCalled();
 		});
 
 		it('should create a WebSocket with the passed endpoint on subcription', function(){
-			RxSocketSubject.config.WebSocket = jasmine.createSpy('MockSocket').and.returnValue({
-				close: function(){}
-			});
 			var socketSubject = RxSocketSubject.create('ws://test.com');
 			disposable = socketSubject.forEach(function(x) {});
-			expect(RxSocketSubject.config.WebSocket).toHaveBeenCalledWith('ws://test.com');
+			expect(sockets[0].url).toBe('ws://test.com');
 		});
 
 		it('should provide a stream of messages from the socket and complete on close', function(done){
-			var socket;
-			RxSocketSubject.config.WebSocket = function MockSocket() {
-				socket = this;
-				this.close = function(){};
-			};
-
 			var socketSubject = RxSocketSubject.create('ws://test.com');
 			var results = [];
 
@@ -122,137 +102,107 @@ describe('RxSocketSubject.create()', function(){
 				expect(true).toBe(false); //ghetto? yes.
 				done();
 			}, function(){
-				expect(results).toEqual(['one', 'two', 'three']);
+				expect(results.map(function(e) {
+					return e.data;
+				})).toEqual(['one', 'two', 'three']);
 				done();
 			});
 			
-			socket.onmessage('one');
-			socket.onmessage('two');
-			socket.onmessage('three');
-			socket.onclose();
+			sendMessage('one');
+			sendMessage('two');
+			sendMessage('three');
+			sendClose();
 		});
 
-		it('should error when the socket errors', function(done){
-			var socket;
-			RxSocketSubject.config.WebSocket = function MockSocket() {
-				socket = this;
-				this.close = function(){};
-			};
-
-			var errorObserver = Rx.Observer.create(function(e) {
-				expect(e).toBe('wat');
-				done();
-			});
-
-			var socketSubject = RxSocketSubject.create('ws://test.com', null, errorObserver);
-
-			disposable = socketSubject.forEach(function(x) {
-			});
-			
-			socket.onerror('wat');
-		});
-
-
-		it('should accept either one endpoint or an array of endpoints, and iterate through them if they fail to connect', function(done) {
+		it('should accept an array of endpoints, and iterate through them if the socket errors', function() {
 			var endpoints = ['ws://bad1', 'ws://bad2', 'ws://good', 'ws://toofar'];
-			var socket;
-			var tries = 0;
-			var errors = [];
 
-			var errorObserver = Rx.Observer.create(function(e) {
-				errors.push(e);
-			});
+			var socketSubject = RxSocketSubject.create(endpoints);
 
-			RxSocketSubject.config.WebSocket = function MockSocket(endpoint) {
-				expect(typeof endpoint).toBe('string');
-				tries++;
-				socket = this;
-				this.close = function(){};
-
-				if(endpoint !== 'ws://good') {
-					// simulate immediate connection error
-					setTimeout(function(){
-						socket.onerror(endpoint);
-					}, 0);
-				} else {
-					expect(tries).toBe(3);
-					done();
-				}
-			};
-
-			var socketSubject = RxSocketSubject.create(endpoints, null, errorObserver);
 			disposable = socketSubject.forEach(function() {});
+
+			var i, len;
+			for(i = 0, len = endpoints.length; i < len; i++) {
+				expect(sockets[0].url).toBe(endpoints[i]);
+				sendError();
+			}
 		});
 
 		describe('onNext', function() {	
-			it('should send a message to the socket when it is called and the socket is OPEN', function() {
-				var socket;
-				var sendSpy = jasmine.createSpy('socket.send');
-
-				RxSocketSubject.config.WebSocket = function MockSocket() {
-					this.readyState = 1; //OPEN
-					this.OPEN = 1;
-					this.send = sendSpy;
-					this.close = function(){};
-					socket = this;
-				};
-
+			it('should buffer messages if no socket exists yet', function(){var socket;
 				var socketSubject = RxSocketSubject.create('');
-				disposable = socketSubject.forEach(function(){});
-
-				socketSubject.onNext('hello');
-
-				expect(socket.send).toHaveBeenCalledWith('hello');
-			});
-
-			it('should queue up messages sent if the socket is not OPEN, then send them when it opens', function(){
-				var sent = [];
-				var socket;
-
-				RxSocketSubject.config.WebSocket = function MockSocket() {
-					this.readyState = 0; //OPEN
-					this.OPEN = 1;
-					this.send = function() {
-						sent.push([].slice.call(arguments));
-					};
-					this.close = function(){};
-					socket = this;
-				};
-
-				var socketSubject = RxSocketSubject.create('');
-				disposable = socketSubject.forEach(function(){});
 
 				socketSubject.onNext('one');
 				socketSubject.onNext('two');
 				socketSubject.onNext('three');
 
-				socket.readyState = socket.OPEN;
-				socket.onopen();
+				disposable = socketSubject.subscribe(function(){});
+				var socket = sockets[0];
+				
+				expect(socket.send.calls.all().length).toBe(0);
 
-				socketSubject.onNext('four');
+				sendOpen();
 
-				expect(sent).toEqual([['one'],['two'],['three'],['four']]);
+				expect(socket.send.calls.all()).toEqual([
+					{ object: socket, args: ['one'] },
+					{ object: socket, args: ['two'] },
+					{ object: socket, args: ['three'] }
+				]);
+			});
+
+			it('should buffer messages AGAIN if the underlying socket has been closed because the observable has been disposed', function(){
+				var socketSubject = RxSocketSubject.create('');
+
+				var disp1 = socketSubject.subscribe(function(){});
+
+				var socket = sockets[0];
+				
+				expect(socket.send.calls.all().length).toBe(0);
+				sendOpen();
+
+				disp1.dispose();
+
+				socketSubject.onNext('one');
+				socketSubject.onNext('two');
+				socketSubject.onNext('three');
+
+				disposable = socketSubject.subscribe(function(){});
+				
+				// get the socket again, because the dispose killed the other one.
+				socket = sockets[0];
+
+				expect(socket.send.calls.all().length).toBe(0);
+				sendOpen();
+
+				expect(socket.send.calls.all()).toEqual([
+					{ object: socket, args: ['one'] },
+					{ object: socket, args: ['two'] },
+					{ object: socket, args: ['three'] }
+				]);
+			});
+
+			it('should send a message to the socket when it is called and the socket is OPEN', function() {
+				var socketSubject = RxSocketSubject.create('');
+				
+				disposable = socketSubject.forEach(function(){});
+
+				sendOpen();
+
+				socketSubject.onNext('hello');
+
+				var socket = sockets[0];
+
+				expect(socket.send).toHaveBeenCalledWith('hello');
 			});
 		});
 
-		describe('onError', function(){
+	 	describe('onError', function(){
 		  it('should call socket.close(1008, string) when called with a string', function(){
-				var socket;
-
-				RxSocketSubject.config.WebSocket = function MockSocket() {
-					socket = this;
-					this.close = function(){};
-					socket.close = jasmine.createSpy('socket.close');
-				};
-
-				var errorObserver = Rx.Observer.create(function(err) {
-					expect(err.code).toBe(1008);
-					expect(err.message).toBe('boop.');
-				});
-
-				var socketSubject = RxSocketSubject.create('', undefined, errorObserver, undefined);
+				var socketSubject = RxSocketSubject.create('');
 
 				disposable = socketSubject.forEach(function(){});
+
+				var socket = sockets[0];
 
 				socketSubject.onError('boop.');
 
@@ -261,22 +211,11 @@ describe('RxSocketSubject.create()', function(){
 
 
 		  it('should call socket.close(e.code, e.message) when called with a ClientInitiatedError', function(){
-				var socket;
-
-				RxSocketSubject.config.WebSocket = function MockSocket() {
-					socket = this;
-					this.close = function(){};
-					socket.close = jasmine.createSpy('socket.close');
-				};
-
-				var errorObserver = Rx.Observer.create(function(err) {
-					expect(err.code).toBe(4002);
-					expect(err.message).toBe('boop.');
-				});
-
-				var socketSubject = RxSocketSubject.create('', undefined, errorObserver, undefined);
+				var socketSubject = RxSocketSubject.create('');
 
 				disposable = socketSubject.forEach(function(){});
+
+				var socket = sockets[0];
 
 				socketSubject.onError(new RxSocketSubject.ClientInitiatedError('boop.', 4002));
 
@@ -285,42 +224,25 @@ describe('RxSocketSubject.create()', function(){
 
 
 		  it('should call socket.close(4003, "shazbot") when called with a { code: 4003, message: "shazbot" }', function(){
-				var socket;
-
-				RxSocketSubject.config.WebSocket = function MockSocket() {
-					socket = this;
-					this.close = function(){};
-					socket.close = jasmine.createSpy('socket.close');
-				};
-
-				var errorObserver = Rx.Observer.create(function(err) {
-					expect(err.code).toBe(4003);
-					expect(err.message).toBe('shazbot');
-				});
-
-				var socketSubject = RxSocketSubject.create('', undefined, errorObserver, undefined);
+				var socketSubject = RxSocketSubject.create('');
 
 				disposable = socketSubject.forEach(function(){});
 
-				socketSubject.onError(new RxSocketSubject.ClientInitiatedError('shazbot', 4003));
+				var socket = sockets[0];
+
+				socketSubject.onError({ code: 4003, message: 'shazbot' });
 
 				expect(socket.close).toHaveBeenCalledWith(4003, 'shazbot');
 			});
 		});
 
-		describe('onCompleted', function() {
+	 	describe('onCompleted', function() {
 			it('should call socket.close() when called with no arguments', function(){
-				var socket;
-
-				RxSocketSubject.config.WebSocket = function MockSocket() {
-					socket = this;
-					this.close = function(){};
-					socket.close = jasmine.createSpy('socket.close');
-				};
-
 				var socketSubject = RxSocketSubject.create('', undefined, undefined, undefined);
 
 				disposable = socketSubject.forEach(function(){});
+
+				var socket = sockets[0];
 
 				socketSubject.onCompleted();
 
@@ -330,49 +252,112 @@ describe('RxSocketSubject.create()', function(){
 
 		describe('when subscribe or forEach is called', function(){
 			it('should create a socket', function(){
-				var socketsCreated = 0;
-
-				RxSocketSubject.config.WebSocket = function MockSocket() {
-					socketsCreated++;
-					this.close = function(){};
-				};
-
 				var socketSubject = RxSocketSubject.create('');
 
-				expect(socketsCreated).toBe(0);
+				expect(sockets.length).toBe(0);
 
 				disposable = socketSubject.forEach(function(){});
 
-				expect(socketsCreated).toBe(1);
+				expect(sockets.length).toBe(1);
 			});
 
 			describe('more than once', function() {
 				it('should only create one socket', function(){
-					var socketsCreated = 0;
-
-					RxSocketSubject.config.WebSocket = function MockSocket() {
-						socketsCreated++;
-						this.close = function(){};
-					};
-
 					var socketSubject = RxSocketSubject.create('');
 
-					disposable = new Rx.CompositeDisposable();
+					disposable = new Rx.CompositeDisposable(
+						socketSubject.forEach(function(){}),
+						socketSubject.forEach(function(){})
+					);
 
-					disposable.add(socketSubject.forEach(function(){}));
-					disposable.add(socketSubject.forEach(function(){}));
-
-					expect(socketsCreated).toBe(1);
+					expect(sockets.length).toBe(1);
 				});
 			});
-		});
-	});
-
-
-	afterEach(function(){
-		RxSocketSubject.config.WebSocket = window.WebSocket;
-		if(disposable) {
-			disposable.dispose();
-		}
+	 	});
 	});
 });
+
+var sockets = [];
+
+function sendOpen() {
+	sockets.forEach(function(socket) {
+		socket.readyState = 1;
+		socket.dispatchEvent(createEvent(socket, 'open'));
+	});
+}
+
+
+function sendMessage(data) {
+	sockets.forEach(function(socket) {
+		socket.dispatchEvent(createEvent(socket, 'message', { data: data }));
+	});
+}
+
+
+function sendClose(code, reason) {
+	sockets.forEach(function(socket) {
+		socket.readyState = 3;
+		socket.dispatchEvent(createEvent(socket, 'close', { code: code, reason: reason }));
+	});
+}
+
+function sendError(err) {
+	sockets.forEach(function(socket) {
+		socket.readyState = 3;
+		socket.dispatchEvent(createEvent(socket, 'error'));
+	});
+}
+
+function MockSocket(url, prototype) {
+	this.url = url;
+	this.prototype = prototype;
+
+	sockets.push(this);
+
+ 	var handlers = {};
+
+	this.addEventListener = jasmine.createSpy('addEventListener').and.callFake(function(name, handler) {
+		handlers[name] = handlers[name] || [];
+		handlers[name].push(handler);
+	});
+
+	this.removeEventListener = jasmine.createSpy('removeEventListener').and.callFake(function(name, handler) {
+		handlers[name] = handlers[name] || [];
+		handlers[name].splice(handlers[name].indexOf(handler), 1);
+	});
+
+	this.dispatchEvent = function(evt) {
+		var handler = handlers[evt.type];
+		if(handler) {
+			handler.forEach(function(fn) {
+				fn.call(this, evt)
+			});
+		}
+	};
+
+	this.send = jasmine.createSpy('send');
+
+	var self = this;
+	this.close = jasmine.createSpy('close').and.callFake(function(){
+		sockets.splice(sockets.indexOf(self), 1);
+	});
+}
+
+
+// up yours, PhantomJS 1.9
+function createEvent(target, name, data) {
+	var evt = {
+		type: name,
+		target: target,
+	};
+
+	if(data) {
+		for(var key in data) {
+			if(data.hasOwnProperty(key)) {
+				evt[key] = data[key];
+			}
+		}
+	}
+
+	return evt;
+}

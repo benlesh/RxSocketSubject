@@ -1,10 +1,10 @@
 define(
     "RxSocketSubject/create",
-    ["./config", "./constants", "./client-initiated-error", "exports"],
+    ["./constants", "./client-initiated-error", "./from-web-socket-fill", "exports"],
     function(
-        RxSocketSubject$config$$,
         RxSocketSubject$constants$$,
         RxSocketSubject$client$initiated$error$$,
+        RxSocketSubject$from$web$socket$fill$$,
         __exports__) {
         "use strict";
 
@@ -12,96 +12,106 @@ define(
             __exports__[name] = value;
         }
 
-        var config;
-        config = RxSocketSubject$config$$["default"];
         var CLOSE_GENERIC;
         CLOSE_GENERIC = RxSocketSubject$constants$$["CLOSE_GENERIC"];
         var ClientInitiatedError;
         ClientInitiatedError = RxSocketSubject$client$initiated$error$$["default"];
+        var fromWebSocket;
+        fromWebSocket = RxSocketSubject$from$web$socket$fill$$["fromWebSocket"];
 
         var Subject = Rx.Subject;
         var Observable = Rx.Observable;
         var Observer = Rx.Observer;
 
 
-        function create(endpoints, openObserver, errorObserver, closeObserver) {
-            var socket;
-            var outgoingQueue = [];
-            var endpointIndex = 0;
+        function create(endpoints, openObserver, errorObserver, closingObserver, closedObserver) {
+            var observer = new Subject();
+            var toSocket = new Subject();
+            var msgBuffer = [];
+            var isOpen = false;
 
-            endpoints = Array.isArray(endpoints) ? endpoints : [endpoints];
+            var socketOpen = function(e) {
+                isOpen = true;
 
-            var observable = Rx.Observable.create(function(obs) {
-                var endpoint = endpoints[endpointIndex++ % endpoints.length];
+                if(openObserver) {
+                    openObserver.onNext(e);
+                }
 
-                socket = new config.WebSocket(endpoint);
+                while(msgBuffer.length > 0) {
+                    var msg = msgBuffer.shift();
+                    toSocket.onNext(msg);
+                }
+            };
 
-                socket.onmessage = function(e) {
-                    obs.onNext(e);
-                };
+            var socketClosed = function() {
+                isOpen = false;
+            };
 
-                socket.onclose = function(e){
-                    if(closeObserver) {
-                        closeObserver.onNext(e);
-                    }
-                    obs.onCompleted();
-                };
-
-                socket.onerror = function(e){
-                    if(errorObserver) {
-                        errorObserver.onNext(e);
-                    }
-                    obs.onError(e);
-                };
-
-                socket.onopen = function(e) {
-                    if(openObserver) {
-                        openObserver.onNext(e);
-                    }
-                    while(outgoingQueue.length) {
-                        var msg = outgoingQueue.shift();
-                        socket.send(msg);
-                    }
-                };
-
-                return function() {
-                    socket.close();
-                };
-            }).retry().publish().refCount();
-
-            var observer = Rx.Observer.create(function(msg) {
-                if(socket.readyState === socket.OPEN) {
-                    socket.send(msg);
+          // subscribe to outward facing observer
+          // and buffer messages if necessary
+          var subjectDisposable = observer.subscribe(function(msg) {
+                if(isOpen) {
+                    toSocket.onNext(msg);
                 } else {
-                    outgoingQueue.push(msg);
+                    msgBuffer.push(msg);
                 }
             }, function(err) {
-                if(socket) {
-                    var reason = 'unknown';
-                    var code = CLOSE_GENERIC;
-                    if(typeof err === 'object') {
-                        reason = err.message;
-                        if(+err.code === +err.code) {
-                            code = +err.code;
-                        }
-                    } else if(typeof err === 'string') {
-                        reason = err;
-                    } 
-
-                    socket.onerror(new ClientInitiatedError(reason, code));
-                    socket.close(code, reason);
-                }
+                toSocket.onError(err);
             }, function() {
-                socket.close();
+                toSocket.onCompleted();
             });
 
-            function ClientInitiatedError(msg, code) {
-                this.message = msg;
-                this.code = code || CLOSE_GENERIC;
-            }
+            var i = 0;
+            var observable = Observable.create(function(o) {
+                var endpoint = Array.isArray(endpoints) ? endpoints[i++ % endpoints.length] : endpoints;
 
-            return Subject.create(observer, observable);
+                var socket = fromWebSocket(endpoint, null, Observer.create(function(e) {
+                    socketOpen(e);
+                }), Observer.create(function(){
+                    if(closingObserver) {
+                        closingObserver.onNext();
+                    }
+                }));
+
+                var disposable = new Rx.CompositeDisposable(
+              socket.subscribe(function(e) {
+                        o.onNext(e);
+                    }, function(err) {
+                        if(errorObserver) {
+                            errorObserver.onNext(err);
+                        }
+                        socketClosed();
+                        o.onError(err);
+                    }, function() {
+                        if(closedObserver) {
+                            closedObserver.onNext();
+                        }
+                        socketClosed();
+                        o.onCompleted();
+                    }),
+
+                    toSocket.subscribe(socket)
+              );
+
+              return function(){
+                socketClosed();
+                disposable.dispose();
+              }
+            }).retry().publish().refCount();
+
+            var socketSubject = Subject.create(observer, observable);
+
+            var dispose = socketSubject.dispose;
+
+            socketSubject.dispose = function() {
+                toSocket.dispose();
+                subjectDisposable.dispose();
+                return dispose();
+            };
+
+            return socketSubject;
         }
+
         __es6_export__("create", create);
     }
 );
