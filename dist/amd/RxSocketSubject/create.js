@@ -49,7 +49,7 @@ define(
 
           // subscribe to outward facing observer
           // and buffer messages if necessary
-          var subjectDisposable = observer.subscribe(function(msg) {
+          observer.subscribe(function(msg) {
                 if(isOpen) {
                     toSocket.onNext(msg);
                 } else {
@@ -95,17 +95,7 @@ define(
               };
             }).retry().publish().refCount();
 
-            var socketSubject = Subject.create(observer, observable);
-
-            var dispose = socketSubject.dispose;
-
-            socketSubject.dispose = function() {
-                toSocket.dispose();
-                subjectDisposable.dispose();
-                return dispose();
-            };
-
-            return socketSubject;
+            return Subject.create(observer, observable);
         }
         __es6_export__("create", create);
     }

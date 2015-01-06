@@ -142,7 +142,7 @@
 
       // subscribe to outward facing observer
       // and buffer messages if necessary
-      var subjectDisposable = observer.subscribe(function(msg) {
+      observer.subscribe(function(msg) {
             if(isOpen) {
                 toSocket.onNext(msg);
             } else {
@@ -188,17 +188,7 @@
           };
         }).retry().publish().refCount();
 
-        var socketSubject = $$RxSocketSubject$create$$Subject.create(observer, observable);
-
-        var dispose = socketSubject.dispose;
-
-        socketSubject.dispose = function() {
-            toSocket.dispose();
-            subjectDisposable.dispose();
-            return dispose();
-        };
-
-        return socketSubject;
+        return $$RxSocketSubject$create$$Subject.create(observer, observable);
     }
 
     var rx$socket$subject$umd$$RxSocketSubject = {
