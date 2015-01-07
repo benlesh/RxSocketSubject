@@ -19,7 +19,6 @@ describe('RxSocketSubject.create()', function(){
 		window.WebSocket = originalWebSocket;
 	});
 
-
 	it('should exist', function(){
 		expect(typeof RxSocketSubject.create).toBe('function');
 	});
@@ -41,6 +40,33 @@ describe('RxSocketSubject.create()', function(){
 		sendOpen();
 	});
 
+	it('should accept a retry argument that is a number', function(done){
+		var opens = 0;
+
+		var openObserver = Rx.Observer.create(function(e) {
+			opens++;
+			sendError('dun dun dun!');
+		});
+
+		var errorObserver = Rx.Observer.create(function(){
+			setTimeout(function(){
+				sendOpen();
+			}, 0);
+		});
+
+		var socketSubject = RxSocketSubject.create('', openObserver, errorObserver, null, null, 2);
+
+		disposable = socketSubject.finally(function() {
+			expect(opens).toBe(2);
+			done();
+		}).forEach(function(){}, function(err){
+			expect(typeof err).toBe('object'); // it should be an error event
+		}, function(){
+			expect(false).toBe('this should not have happened');
+		});
+
+		sendOpen();
+	});
 
 	it('should accept an errorObserver argument', function(done){
 		var called = false;

@@ -24,7 +24,7 @@ define(
         var Observer = Rx.Observer;
 
 
-        function create(endpoints, openObserver, errorObserver, closingObserver, closedObserver) {
+        function create(endpoints, openObserver, errorObserver, closingObserver, closedObserver, retry) {
             var observer = new Subject();
             var toSocket = new Subject();
             var msgBuffer = [];
@@ -93,7 +93,7 @@ define(
                 socketClosed();
                 disposable.dispose();
               };
-            }).retry().publish().refCount();
+            }).retry(retry).publish().refCount();
 
             return Subject.create(observer, observable);
         }

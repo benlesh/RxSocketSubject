@@ -117,7 +117,7 @@
     var $$RxSocketSubject$create$$Observer = Rx.Observer;
 
 
-    function $$RxSocketSubject$create$$create(endpoints, openObserver, errorObserver, closingObserver, closedObserver) {
+    function $$RxSocketSubject$create$$create(endpoints, openObserver, errorObserver, closingObserver, closedObserver, retry) {
         var observer = new $$RxSocketSubject$create$$Subject();
         var toSocket = new $$RxSocketSubject$create$$Subject();
         var msgBuffer = [];
@@ -186,7 +186,7 @@
             socketClosed();
             disposable.dispose();
           };
-        }).retry().publish().refCount();
+        }).retry(retry).publish().refCount();
 
         return $$RxSocketSubject$create$$Subject.create(observer, observable);
     }
