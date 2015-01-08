@@ -62,38 +62,55 @@ define(
             });
 
             var i = 0;
+            var innerObservable;
+            var hasInnerObservable = false;
+            var getInnerObservable = function(){
+                if(!hasInnerObservable) {
+                    innerObservable = Observable.create(function(o) {
+                        var endpoint = Array.isArray(endpoints) ? endpoints[i++ % endpoints.length] : endpoints;
+
+                        var socket = fromWebSocket(endpoint, null, Observer.create(function(e) {
+                            socketOpen(e);
+                        }), closingObserver);
+
+                        var disposable = new Rx.CompositeDisposable(
+                      socket.subscribe(function(e) {
+                                o.onNext(e);
+                            }, function(err) {
+                                if(errorObserver) {
+                                    errorObserver.onNext(err);
+                                }
+                                socketClosed();
+                                o.onError(err);
+                            }, function() {
+                                if(closedObserver) {
+                                    closedObserver.onNext();
+                                }
+                                socketClosed();
+                                o.onCompleted();
+                            }),
+
+                            toSocket.subscribe(socket)
+                      );
+
+                      return function(){
+                        socketClosed();
+                        disposable.dispose();
+                      };
+                    }).retry(retry)
+                    .doOnCompleted(function(){
+                        hasInnerObservable = false;
+                    }).publish().refCount();
+
+                    hasInnerObservable = true;
+                }
+
+                return innerObservable;
+            };
+
             var observable = Observable.create(function(o) {
-                var endpoint = Array.isArray(endpoints) ? endpoints[i++ % endpoints.length] : endpoints;
-
-                var socket = fromWebSocket(endpoint, null, Observer.create(function(e) {
-                    socketOpen(e);
-                }), closingObserver);
-
-                var disposable = new Rx.CompositeDisposable(
-              socket.subscribe(function(e) {
-                        o.onNext(e);
-                    }, function(err) {
-                        if(errorObserver) {
-                            errorObserver.onNext(err);
-                        }
-                        socketClosed();
-                        o.onError(err);
-                    }, function() {
-                        if(closedObserver) {
-                            closedObserver.onNext();
-                        }
-                        socketClosed();
-                        o.onCompleted();
-                    }),
-
-                    toSocket.subscribe(socket)
-              );
-
-              return function(){
-                socketClosed();
-                disposable.dispose();
-              };
-            }).retry(retry).publish().refCount();
+                return getInnerObservable().subscribe(o);
+            });
 
             return Subject.create(observer, observable);
         }
