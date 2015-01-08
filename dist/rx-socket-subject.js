@@ -190,8 +190,11 @@
                     socketClosed();
                     disposable.dispose();
                   };
-                }).retry(retry)
-                .doOnCompleted(function(){
+                }).retry(retry)['do'](function(){}, 
+                function(){
+                    hasInnerObservable = false;
+                },
+                function(){
                     hasInnerObservable = false;
                 }).publish().refCount();
 
