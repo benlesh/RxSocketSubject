@@ -45,7 +45,7 @@
     };
 
     var $$RxSocketSubject$client$initiated$error$$default = $$RxSocketSubject$client$initiated$error$$ClientInitiatedError;
-    function $$from$web$socket$fill$$fromWebSocket(url, protocol, openObserver, closingObserver) {
+    function $$from$web$socket$fill$$fromWebSocket(url, protocol, openObserver, closingObserver, closeObserver) {
         if (!window.WebSocket) { throw new TypeError('WebSocket not implemented in your runtime.'); }
 
         var WebSocket = window.WebSocket;
@@ -76,7 +76,10 @@
           };
           var messageHandler = function(e) { obs.onNext(e); };
           var errHandler = function(err) { obs.onError(err); };
-          var closeHandler = function() { obs.onCompleted(); };
+          var closeHandler = function(e) { 
+            closeObserver && closeObserver.onNext(e);
+            obs.onCompleted(); 
+          };
 
           openObserver && socket.addEventListener('open', openHandler, false);
           socket.addEventListener('message', messageHandler, false);
@@ -164,7 +167,7 @@
 
                     var socket = $$from$web$socket$fill$$fromWebSocket(endpoint, null, $$RxSocketSubject$create$$Observer.create(function(e) {
                         socketOpen(e);
-                    }), closingObserver);
+                    }), closingObserver, closedObserver);
 
                     var disposable = new Rx.CompositeDisposable(
                   socket.subscribe(function(e) {
@@ -176,9 +179,6 @@
                             socketClosed();
                             o.onError(err);
                         }, function() {
-                            if(closedObserver) {
-                                closedObserver.onNext();
-                            }
                             socketClosed();
                             o.onCompleted();
                         }),

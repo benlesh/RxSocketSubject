@@ -8,7 +8,7 @@ define(
       __exports__[name] = value;
     }
 
-    function fromWebSocket(url, protocol, openObserver, closingObserver) {
+    function fromWebSocket(url, protocol, openObserver, closingObserver, closeObserver) {
         if (!window.WebSocket) { throw new TypeError('WebSocket not implemented in your runtime.'); }
 
         var WebSocket = window.WebSocket;
@@ -39,7 +39,10 @@ define(
           };
           var messageHandler = function(e) { obs.onNext(e); };
           var errHandler = function(err) { obs.onError(err); };
-          var closeHandler = function() { obs.onCompleted(); };
+          var closeHandler = function(e) { 
+            closeObserver && closeObserver.onNext(e);
+            obs.onCompleted(); 
+          };
 
           openObserver && socket.addEventListener('open', openHandler, false);
           socket.addEventListener('message', messageHandler, false);

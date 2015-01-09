@@ -71,7 +71,7 @@ define(
 
                         var socket = fromWebSocket(endpoint, null, Observer.create(function(e) {
                             socketOpen(e);
-                        }), closingObserver);
+                        }), closingObserver, closedObserver);
 
                         var disposable = new Rx.CompositeDisposable(
                       socket.subscribe(function(e) {
@@ -83,9 +83,6 @@ define(
                                 socketClosed();
                                 o.onError(err);
                             }, function() {
-                                if(closedObserver) {
-                                    closedObserver.onNext();
-                                }
                                 socketClosed();
                                 o.onCompleted();
                             }),
