@@ -24,7 +24,7 @@ define(
         var Observer = Rx.Observer;
 
 
-        function create(endpoints, openObserver, errorObserver, closingObserver, closedObserver, retry) {
+        function create(endpoints, openObserver, errorObserver, closingObserver, closedObserver) {
             var observer = new Subject();
             var toSocket = new Subject();
             var msgBuffer = [];
@@ -94,7 +94,7 @@ define(
                         socketClosed();
                         disposable.dispose();
                       };
-                    }).retry(retry)['do'](function(){}, 
+                    })['do'](function(){}, 
                     function(){
                         hasInnerObservable = false;
                     },
