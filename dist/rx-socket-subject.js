@@ -153,11 +153,9 @@
             } else {
                 msgBuffer.push(msg);
             }
-        }, function(err) {
-            toSocket.onError(err);
-        }, function() {
-            toSocket.onCompleted();
-        });
+        }, 
+        toSocket.onError.bind(toSocket), 
+        toSocket.onCompleted.bind(toSocket));
 
         var i = 0;
         var innerObservable;
@@ -169,37 +167,38 @@
 
                     var disposable = new Rx.CompositeDisposable(dy,
                             connections.map(function(conn) {
-                            var url;
-                            var protocol = null;
-                            if(typeof conn === 'string') {
-                                url = conn;
-                            }
-                            else if(conn && conn.url) {
-                                url = conn.url;
-                                protocol = conn.protocol;
-                            }
+                                var url;
+                                var protocol = null;
+                                if(typeof conn === 'string') {
+                                    url = conn;
+                                }
+                                else if(conn && conn.url) {
+                                    url = conn.url;
+                                    protocol = conn.protocol;
+                                }
 
-                            return $$from$web$socket$fill$$fromWebSocket(url, protocol, $$RxSocketSubject$create$$Observer.create(function(e) {
-                                socketOpen(e);
-                            }), closingObserver);
-                        }).subscribe(function(socket) {
-                            dy.setDisposable(new Rx.CompositeDisposable(
-                          socket.subscribe(function(e) {
-                                    o.onNext(e);
-                                }, function(err) {
-                                    if(errorObserver) {
-                                        errorObserver.onNext(err);
-                                    }
-                                    socketClosed();
-                                    o.onError(err);
-                                }, function() {
-                                    socketClosed();
-                                    o.onCompleted();
-                                }),
+                                return $$from$web$socket$fill$$fromWebSocket(url, protocol, $$RxSocketSubject$create$$Observer.create(function(e) {
+                                    socketOpen(e);
+                                }), closingObserver);
+                            }).subscribe(function(socket) {
+                                dy.setDisposable(new Rx.CompositeDisposable(
+                              socket.subscribe(function(e) {
+                                        o.onNext(e);
+                                    }, function(err) {
+                                        if(errorObserver) {
+                                            errorObserver.onNext(err);
+                                        }
+                                        socketClosed();
+                                        o.onError(err);
+                                    }, function() {
+                                        socketClosed();
+                                        o.onCompleted();
+                                    }),
 
-                                toSocket.subscribe(socket)
-                          ));
-                        })
+                                    toSocket.subscribe(socket)
+                              ));
+                            },
+                            o.onError.bind(o))
                     );
 
                   return function(){
