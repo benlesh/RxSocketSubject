@@ -24,7 +24,7 @@ define(
         var Observer = Rx.Observer;
 
 
-        function create(endpoints, openObserver, errorObserver, closingObserver, closedObserver) {
+        function create(endpoints, openObserver, errorObserver, closingObserver) {
             var observer = new Subject();
             var toSocket = new Subject();
             var msgBuffer = [];
@@ -71,7 +71,7 @@ define(
 
                         var socket = fromWebSocket(endpoint, null, Observer.create(function(e) {
                             socketOpen(e);
-                        }), closingObserver, closedObserver);
+                        }), closingObserver);
 
                         var disposable = new Rx.CompositeDisposable(
                       socket.subscribe(function(e) {

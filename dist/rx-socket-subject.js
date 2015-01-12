@@ -45,7 +45,7 @@
     };
 
     var $$RxSocketSubject$client$initiated$error$$default = $$RxSocketSubject$client$initiated$error$$ClientInitiatedError;
-    function $$from$web$socket$fill$$fromWebSocket(url, protocol, openObserver, closingObserver, closeObserver) {
+    function $$from$web$socket$fill$$fromWebSocket(url, protocol, openObserver, closingObserver) {
         if (!window.WebSocket) { throw new TypeError('WebSocket not implemented in your runtime.'); }
 
         var WebSocket = window.WebSocket;
@@ -77,7 +77,9 @@
           var messageHandler = function(e) { obs.onNext(e); };
           var errHandler = function(err) { obs.onError(err); };
           var closeHandler = function(e) { 
-            closeObserver && closeObserver.onNext(e);
+            if(!e.wasClean || e.code !== 1000) {
+              obs.onError(e);
+            }
             obs.onCompleted(); 
           };
 
@@ -120,7 +122,7 @@
     var $$RxSocketSubject$create$$Observer = Rx.Observer;
 
 
-    function $$RxSocketSubject$create$$create(endpoints, openObserver, errorObserver, closingObserver, closedObserver) {
+    function $$RxSocketSubject$create$$create(endpoints, openObserver, errorObserver, closingObserver) {
         var observer = new $$RxSocketSubject$create$$Subject();
         var toSocket = new $$RxSocketSubject$create$$Subject();
         var msgBuffer = [];
@@ -167,7 +169,7 @@
 
                     var socket = $$from$web$socket$fill$$fromWebSocket(endpoint, null, $$RxSocketSubject$create$$Observer.create(function(e) {
                         socketOpen(e);
-                    }), closingObserver, closedObserver);
+                    }), closingObserver);
 
                     var disposable = new Rx.CompositeDisposable(
                   socket.subscribe(function(e) {

@@ -54,19 +54,6 @@ describe('RxSocketSubject.create()', function(){
 		sendError('err');
 	});
 
-
-	it('should accept a closeObserver argument', function(done) {
-		var closedObserver = Rx.Observer.create(function() {
-			done();
-		});
-
-		var socketSubject = RxSocketSubject.create('', undefined, undefined, undefined, closedObserver);
-
-		disposable = socketSubject.forEach(function(){});
-
-		sendClose();
-	});
-
 	describe('the returned subject', function() {
 		it('should create one socket, and close the socket when all subscribed observables are complete', function(){
 			var socketSubject = RxSocketSubject.create('');
@@ -109,7 +96,7 @@ describe('RxSocketSubject.create()', function(){
 			sendMessage('one');
 			sendMessage('two');
 			sendMessage('three');
-			sendClose();
+			sendClose(1000, 'done');
 		});
 
 		it('should accept an array of endpoints, and iterate through them if the socket errors', function() {
@@ -309,10 +296,11 @@ function sendMessage(data) {
 }
 
 
-function sendClose(code, reason) {
+function sendClose(code, reason, wasClean) {
+	wasClean = (arguments.length === 3) ? wasClean : true;
 	sockets.forEach(function(socket) {
 		socket.readyState = 3;
-		socket.dispatchEvent(createEvent(socket, 'close', { code: code, reason: reason }));
+		socket.dispatchEvent(createEvent(socket, 'close', { code: code, reason: reason, wasClean: wasClean }));
 	});
 }
 
