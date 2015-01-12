@@ -122,7 +122,7 @@
     var $$RxSocketSubject$create$$Observer = Rx.Observer;
 
 
-    function $$RxSocketSubject$create$$create(endpoints, openObserver, errorObserver, closingObserver) {
+    function $$RxSocketSubject$create$$create(connections, openObserver, errorObserver, closingObserver) {
         var observer = new $$RxSocketSubject$create$$Subject();
         var toSocket = new $$RxSocketSubject$create$$Subject();
         var msgBuffer = [];
@@ -165,28 +165,42 @@
         var getInnerObservable = function(){
             if(!hasInnerObservable) {
                 innerObservable = $$RxSocketSubject$create$$Observable.create(function(o) {
-                    var endpoint = Array.isArray(endpoints) ? endpoints[i++ % endpoints.length] : endpoints;
+                    var dy = new Rx.SerialDisposable();
 
-                    var socket = $$from$web$socket$fill$$fromWebSocket(endpoint, null, $$RxSocketSubject$create$$Observer.create(function(e) {
-                        socketOpen(e);
-                    }), closingObserver);
-
-                    var disposable = new Rx.CompositeDisposable(
-                  socket.subscribe(function(e) {
-                            o.onNext(e);
-                        }, function(err) {
-                            if(errorObserver) {
-                                errorObserver.onNext(err);
+                    var disposable = new Rx.CompositeDisposable(dy,
+                            connections.map(function(conn) {
+                            var url;
+                            var protocol = null;
+                            if(typeof conn === 'string') {
+                                url = conn;
                             }
-                            socketClosed();
-                            o.onError(err);
-                        }, function() {
-                            socketClosed();
-                            o.onCompleted();
-                        }),
+                            else if(conn && conn.url) {
+                                url = conn.url;
+                                protocol = conn.protocol;
+                            }
 
-                        toSocket.subscribe(socket)
-                  );
+                            return $$from$web$socket$fill$$fromWebSocket(url, protocol, $$RxSocketSubject$create$$Observer.create(function(e) {
+                                socketOpen(e);
+                            }), closingObserver);
+                        }).subscribe(function(socket) {
+                            dy.setDisposable(new Rx.CompositeDisposable(
+                          socket.subscribe(function(e) {
+                                    o.onNext(e);
+                                }, function(err) {
+                                    if(errorObserver) {
+                                        errorObserver.onNext(err);
+                                    }
+                                    socketClosed();
+                                    o.onError(err);
+                                }, function() {
+                                    socketClosed();
+                                    o.onCompleted();
+                                }),
+
+                                toSocket.subscribe(socket)
+                          ));
+                        })
+                    );
 
                   return function(){
                     socketClosed();
