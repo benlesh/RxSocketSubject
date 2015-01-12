@@ -22,7 +22,7 @@ define(
               closingObserver.onCompleted();
             }
             if(!code) {
-              socket.close();
+              socket.close(1000, '');
             } else {
               socket.close(code, reason);
             }
@@ -64,16 +64,10 @@ define(
           socket.readyState === WebSocket.OPEN && socket.send(data);
         },
         function(e) {
-          var reason = 'unknown reason';
-          var code = 1008; //generic error code
-          if(typeof e === 'string') {
-            reason = e;
+          if(!e.code) {
+            throw new Error('a status code must be provided');
           }
-          else if(typeof e === 'object') {
-            reason = e.reason || e.message;
-            code = e.code || code;
-          }
-          socketClose(code, reason);
+          socketClose(e.code, e.reason || '');
         },
         socketClose);
 

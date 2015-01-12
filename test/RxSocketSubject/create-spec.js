@@ -194,32 +194,6 @@ describe('RxSocketSubject.create()', function(){
 		});
 
 	 	describe('onError', function(){
-		  it('should call socket.close(1008, string) when called with a string', function(){
-				var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
-
-				disposable = socketSubject.forEach(function(){});
-
-				var socket = sockets[0];
-
-				socketSubject.onError('boop.');
-
-				expect(socket.close).toHaveBeenCalledWith(RxSocketSubject.CLOSE_GENERIC, 'boop.');
-			});
-
-
-		  it('should call socket.close(e.code, e.message) when called with a ClientInitiatedError', function(){
-				var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
-
-				disposable = socketSubject.forEach(function(){});
-
-				var socket = sockets[0];
-
-				socketSubject.onError(new RxSocketSubject.ClientInitiatedError('boop.', 4002));
-
-				expect(socket.close).toHaveBeenCalledWith(4002, 'boop.');
-			});
-
-
 		  it('should call socket.close(4003, "shazbot") when called with a { code: 4003, message: "shazbot" }', function(){
 				var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
 
@@ -227,7 +201,7 @@ describe('RxSocketSubject.create()', function(){
 
 				var socket = sockets[0];
 
-				socketSubject.onError({ code: 4003, message: 'shazbot' });
+				socketSubject.onError({ code: 4003, reason: 'shazbot' });
 
 				expect(socket.close).toHaveBeenCalledWith(4003, 'shazbot');
 			});
@@ -243,7 +217,7 @@ describe('RxSocketSubject.create()', function(){
 
 				socketSubject.onCompleted();
 
-				expect(socket.close).toHaveBeenCalledWith();
+				expect(socket.close).toHaveBeenCalledWith(1000, '');
 			});
 		});
 
