@@ -40,6 +40,15 @@ describe('RxSocketSubject.create()', function(){
 		sendOpen();
 	});
 
+	it('should pass through connections errors', function(done){
+		var socketSubject = RxSocketSubject.create(Rx.Observable.throw('wat'));
+
+		disposable = socketSubject.subscribe(function(){}, function(err) { 
+			expect(err).toBe('wat');
+			done();
+		});
+	});
+	
 	it('should accept an errorObserver argument', function(done){
 		var called = false;
 
