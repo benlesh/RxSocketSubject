@@ -85,7 +85,7 @@ define(
                                 }).subscribe(function(socket) {
                                     if(dy && !dy.isDisposed) {
                                         dy.setDisposable(new Rx.CompositeDisposable(
-                                      socket.subscribe(function(e) {
+                                      socket.asObservable().subscribe(function(e) {
                                                 o.onNext(e);
                                             }, function(err) {
                                                 if(errorObserver) {
