@@ -178,7 +178,7 @@
                             }).subscribe(function(socket) {
                                 if(dy && !dy.isDisposed) {
                                     dy.setDisposable(new Rx.CompositeDisposable(
-                                  socket.asObservable().subscribe(function(e) {
+                                  socket.subscribe(function(e) {
                                             o.onNext(e);
                                         }, function(err) {
                                             if(errorObserver) {
