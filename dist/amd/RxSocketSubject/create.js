@@ -122,7 +122,8 @@ define(
             };
 
             var observable = Observable.create(function(o) {
-                return getInnerObservable().subscribe(o);
+                var disposable = getInnerObservable().subscribe(o);
+                return disposable;
             });
 
             return Subject.create(observer, observable);

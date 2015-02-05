@@ -35,7 +35,7 @@ describe('RxSocketSubject.create()', function(){
 
 		var socketSubject = RxSocketSubject.create(Rx.Observable.just(''), openObserver);
 
-		disposable = socketSubject.forEach(function(){});
+		disposable = socketSubject.subscribe(function(){});
 
 		sendOpen();
 	});
@@ -58,7 +58,7 @@ describe('RxSocketSubject.create()', function(){
 
 		var socketSubject = RxSocketSubject.create(Rx.Observable.just(''), undefined, errorObserver);
 
-		disposable = socketSubject.forEach(function(){});
+		disposable = socketSubject.subscribe(function(){});
 
 		sendError('err');
 	});
@@ -66,8 +66,8 @@ describe('RxSocketSubject.create()', function(){
 	describe('the returned subject', function() {
 		it('should create one socket, and close the socket when all subscribed observables are complete', function(){
 			var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
-			var disp1 = socketSubject.forEach(function(){});
-			var disp2 = socketSubject.forEach(function(){});
+			var disp1 = socketSubject.subscribe(function(){});
+			var disp2 = socketSubject.subscribe(function(){});
 
 			expect(sockets.length).toBe(1);
 
@@ -82,7 +82,7 @@ describe('RxSocketSubject.create()', function(){
 
 		it('should create a WebSocket with the passed endpoint on subcription', function(){
 			var socketSubject = RxSocketSubject.create(Rx.Observable.just('ws://test.com'));
-			disposable = socketSubject.forEach(function(x) {});
+			disposable = socketSubject.subscribe(function(x) {});
 			expect(sockets[0].url).toBe('ws://test.com');
 		});
 
@@ -90,7 +90,7 @@ describe('RxSocketSubject.create()', function(){
 			var socketSubject = RxSocketSubject.create(Rx.Observable.just('ws://test.com'));
 			var results = [];
 
-			disposable = socketSubject.forEach(function(x) {
+			disposable = socketSubject.subscribe(function(x) {
 				results.push(x);
 			}, function(e){
 				expect(true).toBe(false); //ghetto? yes.
@@ -118,7 +118,7 @@ describe('RxSocketSubject.create()', function(){
 
 			var socketSubject = RxSocketSubject.create(Rx.Observable.just(''), null, null, closingObserver);
 
-			var disp = socketSubject.forEach(function(){});
+			var disp = socketSubject.subscribe(function(){});
 
 			socket = sockets[0];
 
@@ -181,7 +181,7 @@ describe('RxSocketSubject.create()', function(){
 			it('should send a message to the socket when it is called and the socket is OPEN', function() {
 				var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
 				
-				disposable = socketSubject.forEach(function(){});
+				disposable = socketSubject.subscribe(function(){});
 
 				sendOpen();
 
@@ -197,7 +197,7 @@ describe('RxSocketSubject.create()', function(){
 		  it('should call socket.close(4003, "shazbot") when called with a { code: 4003, message: "shazbot" }', function(){
 				var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
 
-				disposable = socketSubject.forEach(function(){});
+				disposable = socketSubject.subscribe(function(){});
 
 				var socket = sockets[0];
 
@@ -211,7 +211,7 @@ describe('RxSocketSubject.create()', function(){
 			it('should call socket.close() when called with no arguments', function(){
 				var socketSubject = RxSocketSubject.create(Rx.Observable.just(''), undefined, undefined, undefined);
 
-				disposable = socketSubject.forEach(function(){});
+				disposable = socketSubject.subscribe(function(){});
 
 				var socket = sockets[0];
 
@@ -221,13 +221,13 @@ describe('RxSocketSubject.create()', function(){
 			});
 		});
 
-		describe('when subscribe or forEach is called', function(){
+		describe('when subscribe or subscribe is called', function(){
 			it('should create a socket', function(){
 				var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
 
 				expect(sockets.length).toBe(0);
 
-				disposable = socketSubject.forEach(function(){});
+				disposable = socketSubject.subscribe(function(){});
 
 				expect(sockets.length).toBe(1);
 			});
@@ -237,8 +237,8 @@ describe('RxSocketSubject.create()', function(){
 					var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
 
 					disposable = new Rx.CompositeDisposable(
-						socketSubject.forEach(function(){}),
-						socketSubject.forEach(function(){})
+						socketSubject.subscribe(function(){}),
+						socketSubject.subscribe(function(){})
 					);
 
 					expect(sockets.length).toBe(1);

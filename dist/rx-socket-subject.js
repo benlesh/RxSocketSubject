@@ -214,7 +214,8 @@
         };
 
         var observable = $$RxSocketSubject$create$$Observable.create(function(o) {
-            return getInnerObservable().subscribe(o);
+            var disposable = getInnerObservable().subscribe(o);
+            return disposable;
         });
 
         return $$RxSocketSubject$create$$Subject.create(observer, observable);
