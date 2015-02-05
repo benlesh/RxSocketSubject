@@ -42,8 +42,9 @@ define(
           var closeHandler = function(e) { 
             if(!e.wasClean || e.code !== 1000) {
               obs.onError(e);
+            } else {
+              obs.onCompleted(); 
             }
-            obs.onCompleted(); 
           };
 
           openObserver && socket.addEventListener('open', openHandler, false);
