@@ -24,6 +24,7 @@
     "tests"
   ],
   "dependencies": {
-    "rxjs": "2.3.22"
+    "rxjs": "2.3.22",
+    "rx-dom": "~4.0.4"
   }
 }

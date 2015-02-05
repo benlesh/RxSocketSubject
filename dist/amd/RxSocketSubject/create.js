@@ -1,10 +1,9 @@
 define(
     "RxSocketSubject/create",
-    ["./constants", "./client-initiated-error", "./from-web-socket-fill", "exports"],
+    ["./constants", "./client-initiated-error", "exports"],
     function(
         RxSocketSubject$constants$$,
         RxSocketSubject$client$initiated$error$$,
-        RxSocketSubject$from$web$socket$fill$$,
         __exports__) {
         "use strict";
 
@@ -16,13 +15,11 @@ define(
         CLOSE_GENERIC = RxSocketSubject$constants$$["CLOSE_GENERIC"];
         var ClientInitiatedError;
         ClientInitiatedError = RxSocketSubject$client$initiated$error$$["default"];
-        var fromWebSocket;
-        fromWebSocket = RxSocketSubject$from$web$socket$fill$$["fromWebSocket"];
 
         var Subject = Rx.Subject;
         var Observable = Rx.Observable;
         var Observer = Rx.Observer;
-
+        var fromWebSocket = Rx.DOM.fromWebSocket;
 
         function create(connections, openObserver, errorObserver, closingObserver) {
             var observer = new Subject();

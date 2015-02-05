@@ -2,6 +2,7 @@
   "framework": "jasmine2",
   "src_files": [
     "bower_components/rxjs/dist/rx.all.compat.js",
+    "bower_components/rx-dom/dist/rx.dom.compat.js",
     "dist/rx-socket-subject.js",
     "test/RxSocketSubject/**/*.js"
   ],
