@@ -175,35 +175,35 @@
                                     socketOpen(e);
                                 }), closingObserver);
                             }).subscribe(function(socket) {
-                                dy.setDisposable(new Rx.CompositeDisposable(
-                              socket.subscribe(function(e) {
-                                        o.onNext(e);
-                                    }, function(err) {
-                                        if(errorObserver) {
-                                            errorObserver.onNext(err);
-                                        }
-                                        socketClosed();
-                                        o.onError(err);
-                                    }, function() {
-                                        socketClosed();
-                                        o.onCompleted();
-                                    }),
+                                if(dy && !dy.isDisposed) {
+                                    dy.setDisposable(new Rx.CompositeDisposable(
+                                  socket.subscribe(function(e) {
+                                            o.onNext(e);
+                                        }, function(err) {
+                                            if(errorObserver) {
+                                                errorObserver.onNext(err);
+                                            }
+                                            socketClosed();
+                                            o.onError(err);
+                                        }, function() {
+                                            socketClosed();
+                                            o.onCompleted();
+                                        }),
 
-                                    toSocket.subscribe(socket)
-                              ));
+                                        toSocket.subscribe(socket)
+                                  ));
+                                }
                             },
                             o.onError.bind(o))
                     );
 
                   return function(){
                     socketClosed();
-                    disposable.dispose();
+                    if(disposable && !disposable.isDisposed) {
+                        disposable.dispose();
+                      }
                   };
-                })['do'](function(){}, 
-                function(){
-                    hasInnerObservable = false;
-                },
-                function(){
+                }).finally(function(){
                     hasInnerObservable = false;
                 }).publish().refCount();
 
