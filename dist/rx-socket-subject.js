@@ -45,13 +45,28 @@
     };
 
     var $$RxSocketSubject$client$initiated$error$$default = $$RxSocketSubject$client$initiated$error$$ClientInitiatedError;
+    function $$utils$$extend(a, b) {
+        for(var key in b) {
+            if(b.hasOwnProperty(key)) {
+                a[key] = b[key];
+            }
+        }
+        
+        return a;
+    }
 
     var $$RxSocketSubject$create$$Subject = Rx.Subject;
     var $$RxSocketSubject$create$$Observable = Rx.Observable;
     var $$RxSocketSubject$create$$Observer = Rx.Observer;
     var $$RxSocketSubject$create$$fromWebSocket = Rx.DOM.fromWebSocket;
+    var $$RxSocketSubject$create$$AnonymousSubject = Rx.AnonymousSubject;
 
-    function $$RxSocketSubject$create$$create(connections, openObserver, errorObserver, closingObserver) {
+    function $$RxSocketSubject$create$$RxSocketSubject(config) {
+        var connections = this.connections = config.connections;
+        var openObserver = this.openObserver = config.openObserver;
+        var errorObserver = this.errorObserver = config.errorObserver;
+        var closingObserver = this.closingObserver = config.closingObserver;
+
         var observer = new $$RxSocketSubject$create$$Subject();
         var toSocket = new $$RxSocketSubject$create$$Subject();
         var msgBuffer = [];
@@ -153,7 +168,46 @@
             return disposable;
         });
 
-        return $$RxSocketSubject$create$$Subject.create(observer, observable);
+        $$RxSocketSubject$create$$AnonymousSubject.call(this, observer, observable);
+    }
+
+    $$RxSocketSubject$create$$RxSocketSubject.prototype = $$utils$$extend(Object.create($$RxSocketSubject$create$$AnonymousSubject.prototype), {
+        constructor: $$RxSocketSubject$create$$RxSocketSubject
+    });
+
+    $$RxSocketSubject$create$$RxSocketSubject.create = $$RxSocketSubject$create$$create;
+
+    // more info about WebSocket close codes: 
+    // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
+
+    /**
+        Creates a new Socket Subject. The socket subject is an observable of socket message events, as well
+        as an observer of messages to send over the socket with `onNext()`, an a means to close the socket
+        with `onCompleted()` or `onError()`.
+
+        @method create
+        @param connections {Rx.Observable} an observable of connection information, either endpoint URL strings,
+            or objects with `{ url: someUrl, protocol: someProtocol }`.
+        @param openObserver {Rx.Observer} [optional] an observer that will trigger
+            when the underlying socket opens. Will never error or complete.
+        @param errorObserver {Rx.Observer} [optional] an observer that emits errors occurring on the 
+            socket. Will never error or complete.
+        @param closingObserver {Rx.Observer} [optional] an obsesrver that emits when the socket is about to close.
+    */
+    function $$RxSocketSubject$create$$create(connections, openObserver, errorObserver, closingObserver) {
+        var config;
+        if(connections instanceof $$RxSocketSubject$create$$Observable) {
+            console.warn('DEPRECATION: RxSocketSubject.create() should be called with a configuration object');
+            config = {
+                connections: connections,
+                openObserver: openObserver,
+                errorObserver: errorObserver,
+                closingObserver: closingObserver
+            };
+        } else {
+            config = connections;
+        }
+        return new $$RxSocketSubject$create$$RxSocketSubject(config);
     }
 
     var rx$socket$subject$umd$$RxSocketSubject = {
