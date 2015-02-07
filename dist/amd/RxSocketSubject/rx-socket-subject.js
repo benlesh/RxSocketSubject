@@ -146,13 +146,21 @@ define(
                                 }
                             });
 
-                            // create a new observable of multiplexed ticker data
-                            var subscriptionData = { requestId: 1, subscribeTo: 'NFLX' };
-                            var unsubscriptionData = { requestId: 1, unsubscribeFrom: 'NFLX' };
-                            var netflixTickerData = fromTickerRequest(subscriptionData, unsubscriptionData);
+                            // create a observables of multiplexed ticker data
+                            var subNflx = { requestId: 1, subscribeTo: 'NFLX' };
+                            var unsubNflx = { requestId: 1, unsubscribeFrom: 'NFLX' };
+                            var netflixTickerData = fromTickerRequest(subNflx, unsubNflx);
+
+                            var subGoog = { requestId: 2, subscribeTo: 'GOOG' };
+                            var unsubGoog = { requestId: 2, unsubscribeFrom: 'GOOG' };
+                            var googleTickerData = fromTickerRequest(subGoog, unsubGoog);
 
                             // subscribe to the ticker data
                             netflixTickerData.subscribe(function(responseData) {
+                                console.log(responseData);
+                            });
+
+                            googleTickerData.subscribe(function(responseData) {
                                 console.log(responseData);
                             });
 
