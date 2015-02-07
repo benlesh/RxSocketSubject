@@ -8,18 +8,8 @@ define(
       __exports__[name] = value;
     }
 
-    var create;
-    create = rx$socket$subject$$["create"];
-    var CLOSE_GENERIC;
-    CLOSE_GENERIC = rx$socket$subject$$["CLOSE_GENERIC"];
-    var ClientInitiatedError;
-    ClientInitiatedError = rx$socket$subject$$["ClientInitiatedError"];
-
-    var RxSocketSubject = {
-        create: create,
-        CLOSE_GENERIC: CLOSE_GENERIC,
-        ClientInitiatedError: ClientInitiatedError
-    };
+    var RxSocketSubject;
+    RxSocketSubject = rx$socket$subject$$["default"];
 
     /* global define:true module:true window: true */
 

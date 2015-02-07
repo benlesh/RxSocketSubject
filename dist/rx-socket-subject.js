@@ -1,50 +1,5 @@
 (function() {
     "use strict";
-    var $$RxSocketSubject$constants$$CLOSE_GENERIC = 1008;
-
-    /**
-        An error class for triggering errors with a custom reason
-        and code.
-
-        ### Example
-
-                    var ClientInitiatedError = RxSocketSubject.ClientInitiatedError;
-
-                    socket.onError(new ClientInitiatedError('bad things', 4001));
-
-        @class ClientInitiatedError
-        @constructor
-        @param message {String} the message (aka reason)
-        @param code {Number} [optional] the custom error code. Defaults to `1008`
-    */
-    function $$RxSocketSubject$client$initiated$error$$ClientInitiatedError(message, code) {
-        this.message = message;
-        if(code) {
-            this.code = code;
-        }
-    }
-
-    $$RxSocketSubject$client$initiated$error$$ClientInitiatedError.prototype = {
-        constructor: $$RxSocketSubject$client$initiated$error$$ClientInitiatedError,
-
-        /**
-            The message (aka reason)
-            @property message
-            @type {String}
-            @default ''
-        */
-        message: '',
-
-        /**
-            The status code
-            @property code
-            @type {Number}
-            @default 1008
-        */
-        code: $$RxSocketSubject$constants$$CLOSE_GENERIC
-    };
-
-    var $$RxSocketSubject$client$initiated$error$$default = $$RxSocketSubject$client$initiated$error$$ClientInitiatedError;
     function $$utils$$extend(a, b) {
         for(var key in b) {
             if(b.hasOwnProperty(key)) {
@@ -55,20 +10,20 @@
         return a;
     }
 
-    var $$RxSocketSubject$create$$Subject = Rx.Subject;
-    var $$RxSocketSubject$create$$Observable = Rx.Observable;
-    var $$RxSocketSubject$create$$Observer = Rx.Observer;
-    var $$RxSocketSubject$create$$fromWebSocket = Rx.DOM.fromWebSocket;
-    var $$RxSocketSubject$create$$AnonymousSubject = Rx.AnonymousSubject;
+    var $$RxSocketSubject$rx$socket$subject$$Subject = Rx.Subject;
+    var $$RxSocketSubject$rx$socket$subject$$Observable = Rx.Observable;
+    var $$RxSocketSubject$rx$socket$subject$$Observer = Rx.Observer;
+    var $$RxSocketSubject$rx$socket$subject$$fromWebSocket = Rx.DOM.fromWebSocket;
+    var $$RxSocketSubject$rx$socket$subject$$AnonymousSubject = Rx.AnonymousSubject;
 
-    function $$RxSocketSubject$create$$RxSocketSubject(config) {
+    function $$RxSocketSubject$rx$socket$subject$$RxSocketSubject(config) {
         var connections = this.connections = config.connections;
         var openObserver = this.openObserver = config.openObserver;
         var errorObserver = this.errorObserver = config.errorObserver;
         var closingObserver = this.closingObserver = config.closingObserver;
 
-        var observer = new $$RxSocketSubject$create$$Subject();
-        var toSocket = new $$RxSocketSubject$create$$Subject();
+        var observer = new $$RxSocketSubject$rx$socket$subject$$Subject();
+        var toSocket = new $$RxSocketSubject$rx$socket$subject$$Subject();
         var msgBuffer = [];
         var isOpen = false;
 
@@ -106,7 +61,7 @@
         var hasInnerObservable = false;
         var getInnerObservable = function(){
             if(!hasInnerObservable) {
-                innerObservable = $$RxSocketSubject$create$$Observable.create(function(o) {
+                innerObservable = $$RxSocketSubject$rx$socket$subject$$Observable.create(function(o) {
                     var dy = new Rx.SerialDisposable();
 
                     var disposable = new Rx.CompositeDisposable(dy,
@@ -121,7 +76,7 @@
                                     protocol = conn.protocol;
                                 }
 
-                                return $$RxSocketSubject$create$$fromWebSocket(url, protocol, $$RxSocketSubject$create$$Observer.create(function(e) {
+                                return $$RxSocketSubject$rx$socket$subject$$fromWebSocket(url, protocol, $$RxSocketSubject$rx$socket$subject$$Observer.create(function(e) {
                                     socketOpen(e);
                                 }), closingObserver);
                             }).subscribe(function(socket) {
@@ -163,16 +118,16 @@
             return innerObservable;
         };
 
-        var observable = $$RxSocketSubject$create$$Observable.create(function(o) {
+        var observable = $$RxSocketSubject$rx$socket$subject$$Observable.create(function(o) {
             var disposable = getInnerObservable().subscribe(o);
             return disposable;
         });
 
-        $$RxSocketSubject$create$$AnonymousSubject.call(this, observer, observable);
+        $$RxSocketSubject$rx$socket$subject$$AnonymousSubject.call(this, observer, observable);
     }
 
-    $$RxSocketSubject$create$$RxSocketSubject.prototype = $$utils$$extend(Object.create($$RxSocketSubject$create$$AnonymousSubject.prototype), {
-        constructor: $$RxSocketSubject$create$$RxSocketSubject,
+    $$RxSocketSubject$rx$socket$subject$$RxSocketSubject.prototype = $$utils$$extend(Object.create($$RxSocketSubject$rx$socket$subject$$AnonymousSubject.prototype), {
+        constructor: $$RxSocketSubject$rx$socket$subject$$RxSocketSubject,
 
         /**
             Creates a function that will create a child observable from the RxSocketSubject
@@ -221,7 +176,7 @@
         */
         multiplex: function (responseFilter, options) {
             var socket = this;
-            
+
             var config = {
                 serializer: function(data) {
                     return JSON.stringify(data);
@@ -236,7 +191,7 @@
             }
 
             return function multiplex(subscriptionData, unsubscriptionData) {
-                return $$RxSocketSubject$create$$Observable.create(function(obs) {
+                return $$RxSocketSubject$rx$socket$subject$$Observable.create(function(obs) {
                     var message = config.serializer(subscriptionData);
                     socket.onNext(message);
                     var disposable = socket.map(config.deserializer).
@@ -256,10 +211,7 @@
         }
     });
 
-    $$RxSocketSubject$create$$RxSocketSubject.create = $$RxSocketSubject$create$$create;
-
-    // more info about WebSocket close codes: 
-    // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
+    $$RxSocketSubject$rx$socket$subject$$RxSocketSubject.create = $$RxSocketSubject$rx$socket$subject$$create;
 
     /**
         Creates a new Socket Subject. The socket subject is an observable of socket message events, as well
@@ -275,9 +227,9 @@
             socket. Will never error or complete.
         @param closingObserver {Rx.Observer} [optional] an obsesrver that emits when the socket is about to close.
     */
-    function $$RxSocketSubject$create$$create(connections, openObserver, errorObserver, closingObserver) {
+    function $$RxSocketSubject$rx$socket$subject$$create(connections, openObserver, errorObserver, closingObserver) {
         var config;
-        if(connections instanceof $$RxSocketSubject$create$$Observable) {
+        if(connections instanceof $$RxSocketSubject$rx$socket$subject$$Observable) {
             console.warn('DEPRECATION: RxSocketSubject.create() should be called with a configuration object');
             config = {
                 connections: connections,
@@ -288,14 +240,11 @@
         } else {
             config = connections;
         }
-        return new $$RxSocketSubject$create$$RxSocketSubject(config);
+        return new $$RxSocketSubject$rx$socket$subject$$RxSocketSubject(config);
     }
 
-    var rx$socket$subject$umd$$RxSocketSubject = {
-        create: $$RxSocketSubject$create$$create,
-        CLOSE_GENERIC: $$RxSocketSubject$constants$$CLOSE_GENERIC,
-        ClientInitiatedError: $$RxSocketSubject$client$initiated$error$$default
-    };
+    var $$RxSocketSubject$rx$socket$subject$$default = $$RxSocketSubject$rx$socket$subject$$RxSocketSubject;
+    var $$rx$socket$subject$$default = $$RxSocketSubject$rx$socket$subject$$default;
 
     /* global define:true module:true window: true */
 
@@ -303,11 +252,11 @@
         @namespace RxSocketSubject
     */
     if (typeof define === 'function' && define['amd']) {
-      define(function() { return rx$socket$subject$umd$$RxSocketSubject; });
+      define(function() { return $$rx$socket$subject$$default; });
     } else if (typeof module !== 'undefined' && module['exports']) {
-      module['exports'] = rx$socket$subject$umd$$RxSocketSubject;
+      module['exports'] = $$rx$socket$subject$$default;
     } else if (typeof this !== 'undefined') {
-      this['RxSocketSubject'] = rx$socket$subject$umd$$RxSocketSubject;
+      this['RxSocketSubject'] = $$rx$socket$subject$$default;
     }
 }).call(this);
 
