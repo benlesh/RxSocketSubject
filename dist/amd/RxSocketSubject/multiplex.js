@@ -23,7 +23,7 @@ define(
                     return JSON.parse(e.data);
                 },
                 subscriberProxy: null,
-                messageProxy: null,
+                messageProxy: null
             };
 
             if(options) {
