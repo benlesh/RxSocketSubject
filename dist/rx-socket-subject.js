@@ -187,7 +187,7 @@
                         disposable.dispose();
                       }
                   };
-                }).finally(function(){
+                })['finally'](function(){
                     hasInnerObservable = false;
                 }).publish().refCount();
 
