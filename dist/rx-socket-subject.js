@@ -25,8 +25,10 @@
             deserializer: function(e) {
                 return JSON.parse(e.data);
             },
-            socketProxy: function(data) {
-                return $$multiplex$$Observable.just(data.value);
+            socketProxy: function(messages) {
+                return messages.map(function(d) {
+                    return d.value;
+                });
             }
         };
 
@@ -44,11 +46,11 @@
                 subscriptions = new $$multiplex$$Subject();
                 unsubscriptions = new $$multiplex$$Subject();
 
-                socketSubDisp = $$multiplex$$Observable.merge(subscriptions.map(function(x) {
+                socketSubDisp = config.socketProxy($$multiplex$$Observable.merge(subscriptions.map(function(x) {
                     return { type: 'sub', value: x };
                 }), unsubscriptions.map(function(x) {
                     return { type: 'unsub', value: x };
-                })).flatMap(config.socketProxy).map(config.serializer).subscribe(socket);
+                }))).map(config.serializer).subscribe(socket);
             }
         };
 
