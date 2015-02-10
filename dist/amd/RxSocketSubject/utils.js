@@ -14,7 +14,12 @@ define("RxSocketSubject/utils", ["exports"], function(__exports__) {
         
         return a;
     }
+
     __es6_export__("extend", extend);
+    function identity(x) {
+        return x;
+    }
+    __es6_export__("identity", identity);
 });
 
 //# sourceMappingURL=utils.js.map

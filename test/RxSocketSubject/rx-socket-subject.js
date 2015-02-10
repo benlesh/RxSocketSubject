@@ -1,4 +1,5 @@
 MockSocket.OPEN = 1;
+var Observable = Rx.Observable;
 
 describe('RxSocketSubject.create()', function(){
 	var originalWebSocket;

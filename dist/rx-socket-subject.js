@@ -10,6 +10,77 @@
         return a;
     }
 
+    function $$utils$$identity(x) {
+        return x;
+    }
+
+    var $$multiplex$$Observable = Rx.Observable;
+    var $$multiplex$$Subject = Rx.Subject;
+
+    function $$multiplex$$multiplex(socket, responseFilter, options) {
+        var config = {
+            serializer: function(data) {
+                return JSON.stringify(data);
+            },
+            deserializer: function(e) {
+                return JSON.parse(e.data);
+            },
+            socketProxy: function(data) {
+                return $$multiplex$$Observable.just(data.value);
+            }
+        };
+
+        if(options) {
+            $$utils$$extend(config, options);
+        }
+
+        var subscriptions;
+        var unsubscriptions;
+        var count = 0;
+        var socketSubDisp;
+
+        var subscribeSocket = function() {
+            if(++count === 1) {
+                subscriptions = new $$multiplex$$Subject();
+                unsubscriptions = new $$multiplex$$Subject();
+
+                socketSubDisp = $$multiplex$$Observable.merge(subscriptions.map(function(x) {
+                    return { type: 'sub', value: x };
+                }), unsubscriptions.map(function(x) {
+                    return { type: 'unsub', value: x };
+                })).flatMap(config.socketProxy).map(config.serializer).subscribe(socket);
+            }
+        };
+
+        var unsubscribeSocket = function(){
+            if(--count === 0) {
+                socketSubDisp.dispose();
+            }
+        };
+
+        return function multiplex(subscriptionData, unsubscriptionData) {
+            return $$multiplex$$Observable.create(function(obs) {
+                subscribeSocket();
+                subscriptions.onNext(subscriptionData);
+
+                var disposable = socket.map(config.deserializer).
+                    filter(responseFilter(subscriptionData)).
+                    subscribe(obs);
+
+                var multiplexUnsub = function() {
+                    unsubscriptions.onNext(unsubscriptionData);
+                };
+
+                return function() {
+                    multiplexUnsub();
+                    unsubscribeSocket();
+                    disposable.dispose();
+                };
+            });
+        };
+    }
+    var $$multiplex$$default = $$multiplex$$multiplex;
+
     var $$RxSocketSubject$rx$socket$subject$$Subject = Rx.Subject;
     var $$RxSocketSubject$rx$socket$subject$$Observable = Rx.Observable;
     var $$RxSocketSubject$rx$socket$subject$$Observer = Rx.Observer;
@@ -128,98 +199,10 @@
 
     $$RxSocketSubject$rx$socket$subject$$RxSocketSubject.prototype = $$utils$$extend(Object.create($$RxSocketSubject$rx$socket$subject$$AnonymousSubject.prototype), {
         constructor: $$RxSocketSubject$rx$socket$subject$$RxSocketSubject,
-
-        /**
-            Creates a function that will create a child observable from the RxSocketSubject
-
-            Usage is as follows:
-
-                        // set up an RxSocketSubject
-                      var endpoints = Observable.just('ws://mysocketserver');
-                        var socket = RxSocketSubject.create(endpoints);
-
-                        // create a n observable factory
-                        var fromTickerRequest = socket.multiplex(function(request) {
-                            return function(data) {
-                                return data.requestId === request.requestId;
-                            }
-                        });
-
-                        // create a observables of multiplexed ticker data
-                        var subNflx = { requestId: 1, subscribeTo: 'NFLX' };
-                        var unsubNflx = { requestId: 1, unsubscribeFrom: 'NFLX' };
-                        var netflixTickerData = fromTickerRequest(subNflx, unsubNflx);
-
-                        var subGoog = { requestId: 2, subscribeTo: 'GOOG' };
-                        var unsubGoog = { requestId: 2, unsubscribeFrom: 'GOOG' };
-                        var googleTickerData = fromTickerRequest(subGoog, unsubGoog);
-
-                        // subscribe to the ticker data
-                        netflixTickerData.subscribe(function(responseData) {
-                            console.log(responseData);
-                        });
-
-                        googleTickerData.subscribe(function(responseData) {
-                            console.log(responseData);
-                        });
-
-            @method multiplex
-            @param {Function} responseFilter a predicate to filter response messages that belong to the given multiplexed stream.
-            @param {Object} [options] an optional hash of additional configuration options for the multiplexer. This
-                includes configuration for serializing outbound messages and deserializing inbound messages.
-
-                Defaults are as follows:
-
-                            {
-                                serializer: function(data) {
-                                    return JSON.stringify(data);
-                                },
-                                deserializer: function(e) {
-                                    return JSON.parse(e.data);
-                                }
-                            }
-
-            @return {Function} a function to create an multiplexed socket observable from the current socket. This
-                function accepts arguments for `subscriptionData` and `unsubscriptionData`.
-        */
-        multiplex: function (responseFilter, options) {
-            var socket = this;
-
-            var config = {
-                serializer: function(data) {
-                    return JSON.stringify(data);
-                },
-                deserializer: function(e) {
-                    return JSON.parse(e.data);
-                }
-            };
-
-            if(options) {
-                $$utils$$extend(config, options);
-            }
-
-            return function multiplex(subscriptionData, unsubscriptionData) {
-                return $$RxSocketSubject$rx$socket$subject$$Observable.create(function(obs) {
-                    var message = config.serializer(subscriptionData);
-                    socket.onNext(message);
-                    var disposable = socket.map(config.deserializer).
-                        filter(responseFilter(subscriptionData)).
-                        subscribe(obs);
-
-                    var multiplexUnsub = function() {
-                        socket.onNext(config.serializer(unsubscriptionData));
-                    };
-
-                    return function() {
-                        multiplexUnsub();
-                        disposable.dispose();
-                    }
-                });
-            }
+        multiplex: function(responseFilter, options) {
+            return $$multiplex$$default(this, responseFilter, options);
         }
     });
-
-    $$RxSocketSubject$rx$socket$subject$$RxSocketSubject.create = $$RxSocketSubject$rx$socket$subject$$create;
 
     /**
         Creates a new Socket Subject. The socket subject is an observable of socket message events, as well
@@ -235,7 +218,7 @@
             socket. Will never error or complete.
         @param closingObserver {Rx.Observer} [optional] an obsesrver that emits when the socket is about to close.
     */
-    function $$RxSocketSubject$rx$socket$subject$$create(connections, openObserver, errorObserver, closingObserver) {
+    $$RxSocketSubject$rx$socket$subject$$RxSocketSubject.create = function(connections, openObserver, errorObserver, closingObserver) {
         var config;
         if(connections instanceof $$RxSocketSubject$rx$socket$subject$$Observable) {
             console.warn('DEPRECATION: RxSocketSubject.create() should be called with a configuration object');
@@ -249,7 +232,9 @@
             config = connections;
         }
         return new $$RxSocketSubject$rx$socket$subject$$RxSocketSubject(config);
-    }
+    };
+
+    $$RxSocketSubject$rx$socket$subject$$RxSocketSubject.multiplex = $$multiplex$$default;
 
     var $$RxSocketSubject$rx$socket$subject$$default = $$RxSocketSubject$rx$socket$subject$$RxSocketSubject;
     var $$rx$socket$subject$$default = $$RxSocketSubject$rx$socket$subject$$default;
