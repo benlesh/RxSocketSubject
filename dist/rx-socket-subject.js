@@ -25,14 +25,8 @@
             deserializer: function(e) {
                 return JSON.parse(e.data);
             },
-            subscriberProxy: function(messages) {
-                return messages.map(function(d) {
-                    return d.value;
-                });
-            },
-            messageProxy: function(messageEvents) {
-                return messageEvents;
-            }
+            subscriberProxy: null,
+            messageProxy: null,
         };
 
         if(options) {
@@ -49,11 +43,19 @@
                 subscriptions = new $$multiplex$$Subject();
                 unsubscriptions = new $$multiplex$$Subject();
 
-                socketSubDisp = config.subscriberProxy($$multiplex$$Observable.merge(subscriptions.map(function(x) {
-                    return { type: 'sub', value: x };
-                }), unsubscriptions.map(function(x) {
-                    return { type: 'unsub', value: x };
-                }))).map(config.serializer).subscribe(socket);
+                var outgoing;
+
+                if(config.subscriberProxy) {
+                    outgoing = config.subscriberProxy($$multiplex$$Observable.merge(subscriptions.map(function(x) {
+                        return { type: 'sub', value: x };
+                    }), unsubscriptions.map(function(x) {
+                        return { type: 'unsub', value: x };
+                    })));
+                } else {
+                    outgoing = $$multiplex$$Observable.merge(subscriptions, unsubscriptions);
+                }
+
+                socketSubDisp = outgoing.map(config.serializer).subscribe(socket);
             }
         };
 
@@ -68,7 +70,8 @@
                 subscribeSocket();
                 subscriptions.onNext(subscriptionData);
 
-                var disposable = config.messageProxy(socket).map(config.deserializer).
+                var incoming = config.messageProxy ? config.messageProxy(socket) : socket;
+                var disposable = incoming.map(config.deserializer).
                     filter(responseFilter(subscriptionData)).
                     subscribe(obs);
 
