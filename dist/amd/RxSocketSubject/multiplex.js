@@ -22,10 +22,13 @@ define(
                 deserializer: function(e) {
                     return JSON.parse(e.data);
                 },
-                socketProxy: function(messages) {
+                subscriberProxy: function(messages) {
                     return messages.map(function(d) {
                         return d.value;
                     });
+                },
+                messageProxy: function(messageEvents) {
+                    return messageEvents;
                 }
             };
 
@@ -43,7 +46,7 @@ define(
                     subscriptions = new Subject();
                     unsubscriptions = new Subject();
 
-                    socketSubDisp = config.socketProxy(Observable.merge(subscriptions.map(function(x) {
+                    socketSubDisp = config.subscriberProxy(Observable.merge(subscriptions.map(function(x) {
                         return { type: 'sub', value: x };
                     }), unsubscriptions.map(function(x) {
                         return { type: 'unsub', value: x };
@@ -62,7 +65,7 @@ define(
                     subscribeSocket();
                     subscriptions.onNext(subscriptionData);
 
-                    var disposable = socket.map(config.deserializer).
+                    var disposable = config.messageProxy(socket).map(config.deserializer).
                         filter(responseFilter(subscriptionData)).
                         subscribe(obs);
 
