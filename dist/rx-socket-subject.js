@@ -66,14 +66,19 @@
         };
 
         return function multiplex(subscriptionData, unsubscriptionData, responseFilter) {
-            responseFilter = responseFilter || config.responseFilter;
+            if(!responseFilter && !config.responseFilter) {
+                throw 'no response filter provided';
+            }
+            
+            responseFilter = responseFilter || config.responseFilter(subscriptionData);
+            
             return $$multiplex$$Observable.create(function(obs) {
                 subscribeSocket();
                 subscriptions.onNext(subscriptionData);
 
                 var incoming = config.messageProxy ? config.messageProxy(socket) : socket;
                 var disposable = incoming.map(config.deserializer).
-                    filter(responseFilter(subscriptionData)).
+                    filter(responseFilter).
                     subscribe(obs);
 
                 var multiplexUnsub = function() {
