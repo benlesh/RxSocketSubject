@@ -1,4 +1,4 @@
-- master
+- 0.6.0
 	- BREAKING: multiplex `responseFilter` argument moved to `config` parameter. Signature changed.
 	- FEATURE: Add optional per-multiplexer responseFilter argument. This allows for more granular control of response identification. Default can be used, then multiplexer responseFilter argument can override.
 - 0.5.0
