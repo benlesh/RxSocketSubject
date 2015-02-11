@@ -14,7 +14,7 @@ define(
         var Observable = Rx.Observable;
         var Subject = Rx.Subject;
 
-        function multiplex(socket, responseFilter, options) {
+        function multiplex(socket, options) {
             var config = {
                 serializer: function(data) {
                     return JSON.stringify(data);
@@ -62,7 +62,8 @@ define(
                 }
             };
 
-            return function multiplex(subscriptionData, unsubscriptionData) {
+            return function multiplex(subscriptionData, unsubscriptionData, responseFilter) {
+                responseFilter = responseFilter || config.responseFilter;
                 return Observable.create(function(obs) {
                     subscribeSocket();
                     subscriptions.onNext(subscriptionData);

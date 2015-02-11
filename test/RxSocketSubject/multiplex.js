@@ -6,16 +6,20 @@ describe('multiplex', function(){
 	describe('the returned multiplexer function', function(){
 		it('should be a function', function(){
 			var socket = new Subject();
-			var multiplexer = multiplex(socket, function() {
-				return function(x){ return x; }
+			var multiplexer = multiplex(socket, {
+				responseFilter: function() {
+					return function(x){ return x; }
+				}
 			});
 			expect(typeof multiplexer).toBe('function');
 		});
 
 		it('should return an observable', function(){
 			var socket = new Subject();
-			var multiplexer = multiplex(socket, function() {
-				return function(x){ return x; }
+			var multiplexer = multiplex(socket, {
+				responseFilter: function() {
+					return function(x){ return x; }
+				}
 			});
 			var result = multiplexer({ sub: 1 }, { unsub: 1 });
 			expect(result instanceof Observable).toBe(true);
@@ -35,8 +39,10 @@ describe('multiplex', function(){
 					};
 				});
 
-				var multiplexer = multiplex(socket, function() {
-					return function(x){ return x; }
+				var multiplexer = multiplex(socket, {
+					responseFilter: function() {
+						return function(x){ return x; }
+					}
 				});
 				var result = multiplexer({ sub: 1 }, { unsub: 1 });
 				var disposable = result.subscribe(function(){});
