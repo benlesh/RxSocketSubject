@@ -1,3 +1,6 @@
+- master
+	- BREAKING: multiplex `responseFilter` argument moved to `config` parameter. Signature changed.
+	- FEATURE: Add optional per-multiplexer responseFilter argument. This allows for more granular control of response identification. Default can be used, then multiplexer responseFilter argument can override.
 - 0.5.0
 	- FEATURE: Add `multiplex` method to RxSocketSubject. Multiplex is a new method that returns a function with which Observables can be created that multiplex data over the underlying RxSocketSubject.
 	- FEATURE: Add `serializer` and `deserializer` configuration properties to multiplexing. Allows for custom serialization.
