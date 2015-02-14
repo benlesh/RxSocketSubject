@@ -146,53 +146,26 @@
         var hasInnerObservable = false;
         var getInnerObservable = function(){
             if(!hasInnerObservable) {
-                innerObservable = $$RxSocketSubject$rx$socket$subject$$Observable.create(function(o) {
-                    var dy = new Rx.SerialDisposable();
+                innerObservable = connections.map(function(conn) {
+                    return (typeof conn === 'string') ? { url: conn, protocol: null } : conn;
+                }).flatMapLatest(function(conn) {
+                    return $$RxSocketSubject$rx$socket$subject$$Observable.create(function(o) {
+                        var socket = $$RxSocketSubject$rx$socket$subject$$fromWebSocket(conn.url, conn.protocol, $$RxSocketSubject$rx$socket$subject$$Observer.create(function(e) {
+                            socketOpen(e);
+                        }), closingObserver);
 
-                    var disposable = new Rx.CompositeDisposable(dy,
-                            connections.map(function(conn) {
-                                var url;
-                                var protocol = null;
-                                if(typeof conn === 'string') {
-                                    url = conn;
-                                }
-                                else if(conn && conn.url) {
-                                    url = conn.url;
-                                    protocol = conn.protocol;
-                                }
+                        return new Rx.CompositeDisposable(
+                      socket['catch'](function(err) {
+                        if(errorObserver) {
+                            errorObserver.onNext(err);
+                        }
+                        throw err;
+                      })['finally'](function(){
+                        socketClosed();
+                      }).subscribe(o),
 
-                                return $$RxSocketSubject$rx$socket$subject$$fromWebSocket(url, protocol, $$RxSocketSubject$rx$socket$subject$$Observer.create(function(e) {
-                                    socketOpen(e);
-                                }), closingObserver);
-                            }).subscribe(function(socket) {
-                                if(dy && !dy.isDisposed) {
-                                    dy.setDisposable(new Rx.CompositeDisposable(
-                                  socket.subscribe(function(e) {
-                                            o.onNext(e);
-                                        }, function(err) {
-                                            if(errorObserver) {
-                                                errorObserver.onNext(err);
-                                            }
-                                            socketClosed();
-                                            o.onError(err);
-                                        }, function() {
-                                            socketClosed();
-                                            o.onCompleted();
-                                        }),
-
-                                        toSocket.subscribe(socket)
-                                  ));
-                                }
-                            },
-                            o.onError.bind(o))
-                    );
-
-                  return function(){
-                    socketClosed();
-                    if(disposable && !disposable.isDisposed) {
-                        disposable.dispose();
-                      }
-                  };
+                            toSocket.subscribe(socket))
+                    });
                 })['finally'](function(){
                     hasInnerObservable = false;
                 }).publish().refCount();
