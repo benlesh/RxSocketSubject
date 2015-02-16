@@ -1,3 +1,7 @@
+- 0.6.2
+	- BUGFIX: Remove leftover debug statement
+- 0.6.1
+  - BUGFIX: Ensure underlying socket reconnects when new connection information provided
 - 0.6.0
 	- BREAKING: multiplex `responseFilter` argument moved to `config` parameter. Signature changed.
 	- FEATURE: Add optional per-multiplexer responseFilter argument. This allows for more granular control of response identification. Default can be used, then multiplexer responseFilter argument can override.
