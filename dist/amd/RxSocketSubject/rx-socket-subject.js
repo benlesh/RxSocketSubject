@@ -58,17 +58,28 @@ define(
                     msgBuffer.push(msg);
                 }
             }, 
-            toSocket.onError.bind(toSocket), 
-            toSocket.onCompleted.bind(toSocket));
+            function(err) {
+                if(toSocket) {
+                    toSocket.onError(err);
+                }
+            }, 
+            function(){
+                if(toSocket) {
+                    toSocket.onCompleted();
+                }
+            });
 
             var i = 0;
             var innerObservable;
             var hasInnerObservable = false;
             var getInnerObservable = function(){
                 if(!hasInnerObservable) {
+                    toSocket = new Subject();
                     innerObservable = connections.map(function(conn) {
                         return (typeof conn === 'string') ? { url: conn, protocol: null } : conn;
                     }).flatMapLatest(function(conn) {
+                        console.debug('==>', toSocket);
+
                         return Observable.create(function(o) {
                             var socket = fromWebSocket(conn.url, conn.protocol, Observer.create(function(e) {
                                 socketOpen(e);

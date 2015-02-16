@@ -138,17 +138,28 @@
                 msgBuffer.push(msg);
             }
         }, 
-        toSocket.onError.bind(toSocket), 
-        toSocket.onCompleted.bind(toSocket));
+        function(err) {
+            if(toSocket) {
+                toSocket.onError(err);
+            }
+        }, 
+        function(){
+            if(toSocket) {
+                toSocket.onCompleted();
+            }
+        });
 
         var i = 0;
         var innerObservable;
         var hasInnerObservable = false;
         var getInnerObservable = function(){
             if(!hasInnerObservable) {
+                toSocket = new $$RxSocketSubject$rx$socket$subject$$Subject();
                 innerObservable = connections.map(function(conn) {
                     return (typeof conn === 'string') ? { url: conn, protocol: null } : conn;
                 }).flatMapLatest(function(conn) {
+                    console.debug('==>', toSocket);
+
                     return $$RxSocketSubject$rx$socket$subject$$Observable.create(function(o) {
                         var socket = $$RxSocketSubject$rx$socket$subject$$fromWebSocket(conn.url, conn.protocol, $$RxSocketSubject$rx$socket$subject$$Observer.create(function(e) {
                             socketOpen(e);

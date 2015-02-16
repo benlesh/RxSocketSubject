@@ -65,6 +65,24 @@ describe('RxSocketSubject.create()', function(){
 	});
 
 	describe('the returned subject', function() {
+		it('should reconnect the socket when a new connection is emitted into it', function(){
+			var connections = new Rx.BehaviorSubject('ws://one');
+			var socketSubject = RxSocketSubject.create(connections);
+
+			socketSubject.subscribe(function(){});
+			var socket = sockets[0];
+
+			expect(socket.url).toBe('ws://one');
+			expect(socket.close).not.toHaveBeenCalled();
+
+			connections.onNext('ws://two');
+
+			expect(socket.close).toHaveBeenCalled();
+			expect(socket).not.toBe(sockets[0]); // new socket created
+			var socket = sockets[0];
+			expect(socket.url).toBe('ws://two');
+		});
+
 		it('should create one socket, and close the socket when all subscribed observables are complete', function(){
 			var socketSubject = RxSocketSubject.create(Rx.Observable.just(''));
 			var disp1 = socketSubject.subscribe(function(){});
@@ -311,6 +329,7 @@ function MockSocket(url, prototype) {
 	this.send = jasmine.createSpy('send');
 
 	var self = this;
+
 	this.close = jasmine.createSpy('close').and.callFake(function(){
 		sockets.splice(sockets.indexOf(self), 1);
 	});
