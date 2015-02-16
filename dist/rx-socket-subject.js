@@ -158,8 +158,6 @@
                 innerObservable = connections.map(function(conn) {
                     return (typeof conn === 'string') ? { url: conn, protocol: null } : conn;
                 }).flatMapLatest(function(conn) {
-                    console.debug('==>', toSocket);
-
                     return $$RxSocketSubject$rx$socket$subject$$Observable.create(function(o) {
                         var socket = $$RxSocketSubject$rx$socket$subject$$fromWebSocket(conn.url, conn.protocol, $$RxSocketSubject$rx$socket$subject$$Observer.create(function(e) {
                             socketOpen(e);
