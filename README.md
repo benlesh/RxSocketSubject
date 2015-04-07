@@ -13,6 +13,12 @@ With bower:
 bower install -S rx-socket-subject
 ```
 
+With npm:
+
+```sh
+npm install -S rx-socket-subject
+```
+
 ## Goals
 
 The goals of this project is to produce an observable WebSocket implementation that meets a set of common
