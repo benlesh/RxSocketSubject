@@ -1,3 +1,5 @@
+- 0.6.3
+  - Update rxjs and rx-dom dependencies
 - 0.6.2
 	- BUGFIX: Remove leftover debug statement
 - 0.6.1
