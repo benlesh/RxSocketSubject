@@ -1,6 +1,6 @@
 {
   "name": "rx-socket-subject",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "A more full-featured wrapper for web sockets using RxJS and RxJS-DOM",
   "main": "index.js",
   "scripts": {
