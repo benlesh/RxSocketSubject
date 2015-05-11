@@ -79,9 +79,16 @@ define(
                         return (typeof conn === 'string') ? { url: conn, protocol: null } : conn;
                     }).flatMapLatest(function(conn) {
                         return Observable.create(function(o) {
+
+                            var closingProxyObserver = closingObserver ? 
+                                Rx.Observer.create(function(e) {
+                                    closingObserver.onNext(e);
+                                }) :
+                                undefined;
+
                             var socket = fromWebSocket(conn.url, conn.protocol, Observer.create(function(e) {
                                 socketOpen(e);
-                            }), closingObserver);
+                            }), closingProxyObserver);
 
                             return new Rx.CompositeDisposable(
                           socket['catch'](function(err) {

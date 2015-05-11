@@ -160,9 +160,9 @@ describe('RxSocketSubject.create()', function(){
 				sendOpen();
 
 				expect(socket.send.calls.all()).toEqual([
-					{ object: socket, args: ['one'] },
-					{ object: socket, args: ['two'] },
-					{ object: socket, args: ['three'] }
+					{ object: socket, args: ['one'], returnValue: undefined },
+					{ object: socket, args: ['two'], returnValue: undefined },
+					{ object: socket, args: ['three'], returnValue: undefined }
 				]);
 			});
 
@@ -191,9 +191,9 @@ describe('RxSocketSubject.create()', function(){
 				sendOpen();
 
 				expect(socket.send.calls.all()).toEqual([
-					{ object: socket, args: ['one'] },
-					{ object: socket, args: ['two'] },
-					{ object: socket, args: ['three'] }
+					{ object: socket, args: ['one'], returnValue: undefined },
+					{ object: socket, args: ['two'], returnValue: undefined },
+					{ object: socket, args: ['three'], returnValue: undefined }
 				]);
 			});
 
