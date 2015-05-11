@@ -1,3 +1,5 @@
+- 0.6.4
+	- properly proxy closingObserver so it doesn't complete when the first underlying socket is closed.
 - 0.6.3
   - Update rxjs and rx-dom dependencies
 - 0.6.2
