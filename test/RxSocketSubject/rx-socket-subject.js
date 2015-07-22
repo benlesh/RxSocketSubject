@@ -150,19 +150,19 @@ describe('RxSocketSubject.create()', function(){
 
 				socketSubject.onNext('one');
 				socketSubject.onNext('two');
-				socketSubject.onNext('three');
+			        socketSubject.onNext('three');
 
 				disposable = socketSubject.subscribe(function(){});
 				var socket = sockets[0];
-				
-				expect(socket.send.calls.all().length).toBe(0);
 
-				sendOpen();
+			        expect(socket.send.calls.all().length).toBe(0);
+
+			        sendOpen();
 
 				expect(socket.send.calls.all()).toEqual([
-					{ object: socket, args: ['one'], returnValue: undefined },
-					{ object: socket, args: ['two'], returnValue: undefined },
-					{ object: socket, args: ['three'], returnValue: undefined }
+					{ object: socket, args: ['one']},
+					{ object: socket, args: ['two']},
+					{ object: socket, args: ['three']}
 				]);
 			});
 
@@ -187,13 +187,13 @@ describe('RxSocketSubject.create()', function(){
 				// get the socket again, because the dispose killed the other one.
 				socket = sockets[0];
 
-				expect(socket.send.calls.all().length).toBe(0);
-				sendOpen();
+			        expect(socket.send.calls.all().length).toBe(0);
+			        sendOpen();
 
-				expect(socket.send.calls.all()).toEqual([
-					{ object: socket, args: ['one'], returnValue: undefined },
-					{ object: socket, args: ['two'], returnValue: undefined },
-					{ object: socket, args: ['three'], returnValue: undefined }
+			        expect(socket.send.calls.all()).toEqual([
+					{ object: socket, args: ['one']},
+					{ object: socket, args: ['two']},
+					{ object: socket, args: ['three']}
 				]);
 			});
 
