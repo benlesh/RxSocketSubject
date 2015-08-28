@@ -3,3 +3,4 @@ bower_components
 tmp
 temp
 npm-debug.log
+dist/rx-socket-subject.min.js

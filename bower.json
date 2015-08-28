@@ -1,6 +1,6 @@
 {
   "name": "RxSocketSubject",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "homepage": "https://github.com/blesh/RxSocketSubject",
   "authors": [
     "Ben Lesh <ben@benlesh.com>"
@@ -24,7 +24,7 @@
     "tests"
   ],
   "dependencies": {
-    "rxjs": "~2.5.2",
-    "rx-dom": "~6.0.0"
+    "rxjs": "*",
+    "rx-dom": "*"
   }
 }
