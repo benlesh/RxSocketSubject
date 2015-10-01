@@ -1,3 +1,5 @@
+- 0.7.0
+  - Update RxJS to 4.0.0
 - 0.6.4
 	- properly proxy closingObserver so it doesn't complete when the first underlying socket is closed.
 - 0.6.3
