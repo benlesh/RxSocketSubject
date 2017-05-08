@@ -1,3 +1,8 @@
+# Maintenence Mode
+
+This project is for RxJS 4 and under. Given that WebSocketSubject is part of RxJS 5 and up, it's advisable to use that instead. There will be no more features or major work going on with this repository.
+
+
 RxSocketSubject
 ===============
 
